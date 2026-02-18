@@ -1,4 +1,4 @@
-import * as d3 from "d3";
+﻿import * as d3 from "d3";
 import type { ScatterDatum } from "@/types/viz";
 
 export type ScatterOptions = {
@@ -33,14 +33,13 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
     d: ScatterDatum,
   ) {
     const isHL = !!(lastOpt?.highlightId && d.id === lastOpt.highlightId);
-    sel.attr("fill", isHL ? "orange" : "#4682B4").attr("opacity", isHL ? 1 : 0.8);
+    sel.attr("fill", isHL ? "#f97316" : "#eab308").attr("opacity", isHL ? 1 : 0.42);
   }
 
   function update(data: ScatterDatum[], opt: ScatterOptions) {
     lastOpt = opt;
 
-    // 空数据也要保持尺寸（否则容器会抖）
-    svg.attr("width", opt.width).attr("height", opt.height);
+    // 绌烘暟鎹篃瑕佷繚鎸佸昂瀵革紙鍚﹀垯瀹瑰櫒浼氭姈锛?    svg.attr("width", opt.width).attr("height", opt.height);
 
     if (!data.length) return;
     const width = opt.width - margin.left - margin.right;
@@ -109,10 +108,17 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
       .attr("cx", (d) => xScale(d.x))
       .attr("cy", (d) => yScale(d.y))
       .attr("r", (d) => rScale(d.size ?? 0))
-      /*原本你可能直接 attr 样式，这里改成统一走 applyBaseStyle */
+      /*鍘熸湰浣犲彲鑳界洿鎺?attr 鏍峰紡锛岃繖閲屾敼鎴愮粺涓€璧?applyBaseStyle */
       .each(function (d) {
         applyBaseStyle(d3.select(this), d);
       });
+
+    const raiseHighlighted = () => {
+      if (!opt.highlightId) return;
+      merged.filter((d) => d.id === opt.highlightId).raise();
+    };
+
+    raiseHighlighted();
 
     merged
       .on("pointerenter", function (event, d) {
@@ -124,7 +130,8 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
         handlers.onMove?.(d, event as PointerEvent);
       })
       .on("pointerleave", function (event, d) {
-        applyBaseStyle(d3.select(this), d); // 恢复默认样式
+        applyBaseStyle(d3.select(this), d); // 鎭㈠榛樿鏍峰紡
+        raiseHighlighted();
         handlers.onLeave?.(d, event as PointerEvent);
       })
       .on("click", function (event, d) {
@@ -138,3 +145,4 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
 
   return { update, destroy };
 }
+
