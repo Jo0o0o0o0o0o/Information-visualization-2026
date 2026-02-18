@@ -3,6 +3,17 @@ export type DogApiBreed = {
   breed_group?: string | null;
 };
 
+const BREED_GROUP_BG: Record<string, string> = {
+  Working: "#ef4444",
+  Herding: "#3b82f6",
+  Hound: "#f59e0b",
+  Sporting: "#10b981",
+  Terrier: "#f97316",
+  Toy: "#8b5cf6",
+  "Non-Sporting": "#14b8a6",
+  Mixed: "#64748b",
+};
+
 function normalizeName(input: string): string {
   return String(input ?? "")
     .toLowerCase()
@@ -59,3 +70,9 @@ export function findBreedGroupByName(
   return null;
 }
 
+export function getBreedGroupTagStyle(group: string) {
+  return {
+    backgroundColor: BREED_GROUP_BG[group] ?? "#6b7280",
+    color: "#ffffff",
+  };
+}
