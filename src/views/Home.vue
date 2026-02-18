@@ -10,6 +10,8 @@ import HeightCompareChart from "@/components/HeightCompareChart.vue";
 import { computeAverageTraits } from "@/utils/computeAverageTraits";
 import BeeswarmPlot from "@/components/BeeWarmPlot.vue";
 import { traitLabels } from "@/utils/traitFilter";
+import theDogApiBreeds from "@/data/dogs_thedogapi_breeds.json";
+import { findBreedGroupByName } from "@/utils/fuzzyBreedGroup";
 import {
   TRAIT_KEYS,
   type TraitKey,
@@ -39,6 +41,14 @@ const scatterData = computed<ScatterDatum[]>(() =>
 );
 
 const highlightId = computed(() => selectedDog.value?.name ?? null);
+const selectedBreedGroup = computed(() => {
+  const dogName = selectedDog.value?.name;
+  if (!dogName) return null;
+  return findBreedGroupByName(
+    dogName,
+    theDogApiBreeds as { name: string; breed_group?: string | null }[],
+  );
+});
 
 const filterEnabled = ref(false);
 const traitEnabled = reactive<Record<TraitKey, boolean>>(createDefaultTraitEnabled());
@@ -115,6 +125,10 @@ onMounted(() => {
         <div class="imgBox">
           <img v-if="selectedDog" :src="selectedDog.image_link" :alt="selectedDog.name" />
           <div v-else class="placeholder">狗的 image</div>
+        </div>
+
+        <div v-if="selectedBreedGroup" class="breedGroupTag">
+          {{ selectedBreedGroup }}
         </div>
 
          <button class="compareBtn" :disabled="!selectedDog" @click="sendToCompare">
@@ -288,6 +302,18 @@ onMounted(() => {
 
 .placeholder {
   opacity: 0.7;
+}
+
+.breedGroupTag {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgb(255, 204, 0);
+  font:rgb(255, 255, 255);
 }
 
 .traitArea {
