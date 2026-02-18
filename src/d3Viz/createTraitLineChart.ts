@@ -44,6 +44,12 @@ export function createTraitLineChart(svgEl: SVGSVGElement) {
   const gAxes = root.append("g").attr("class", "axes");
   const gLine = root.append("g").attr("class", "line");
   const gDots = root.append("g").attr("class", "dots");
+  const gInteraction = root.append("g").attr("class", "interaction");
+  const gHover = root
+    .append("g")
+    .attr("class", "hover")
+    .style("display", "none")
+    .style("pointer-events", "none");
 
   // axis containers
   const axisGroups = gAxes.append("g").attr("class", "axis-groups");
@@ -51,6 +57,20 @@ export function createTraitLineChart(svgEl: SVGSVGElement) {
   // path
   const pathAvg = gLine.append("path").attr("fill", "none").attr("stroke-width", 2);
   const pathDog = gLine.append("path").attr("fill", "none").attr("stroke-width", 3.5);
+  const hoverGuide = gHover.append("line").attr("stroke", "#94a3b8").attr("stroke-dasharray", "2 3");
+  const hoverDogDot = gHover.append("circle").attr("r", 6).attr("fill", "#facc15").attr("stroke", "#fff");
+  const hoverAvgDot = gHover.append("circle").attr("r", 4).attr("fill", "#9ca3af").attr("stroke", "#fff");
+  const hoverTip = gHover.append("g").attr("class", "hover-tip");
+  const hoverTipBg = hoverTip
+    .append("rect")
+    .attr("rx", 6)
+    .attr("fill", "#111827")
+    .attr("opacity", 0.92);
+  const hoverTipText = hoverTip
+    .append("text")
+    .attr("fill", "#f9fafb")
+    .style("font-size", "11px")
+    .style("font-weight", "600");
 
   function update(
     dog: DogBreed | null,
@@ -87,6 +107,13 @@ export function createTraitLineChart(svgEl: SVGSVGElement) {
       const v = typeof raw === "number" ? raw : NaN;
       return { key: t.key, label: t.label, value: v };
     });
+    const avgByKey = new Map(avgValues.map((v) => [v.key, v.value] as const));
+    const hoverData = values.map((v) => ({
+      key: v.key,
+      label: v.label,
+      value: v.value,
+      avg: avgByKey.get(v.key) ?? NaN,
+    }));
 
     // Draw vertical axes per trait (like your reference image)
     const axesSel = axisGroups
@@ -194,7 +221,87 @@ export function createTraitLineChart(svgEl: SVGSVGElement) {
       .attr("fill", "#9ca3af")
       .attr("opacity", (d) => (Number.isFinite(d.value) ? 0.6 : 0.18));
 
-    // Value labels (small numbers on dots)
+    const xCoords = traits.map((t) => xPos(t.key));
+    const xDiffs = xCoords.slice(1).map((xv, i) => Math.abs(xv - (xCoords[i] ?? xv)));
+    const spacing = xCoords.length > 1 ? (d3.min(xDiffs) ?? innerW) : innerW;
+    const hitWidth = Math.max(18, spacing * 0.88);
+
+    const formatVal = (v: number) => (Number.isFinite(v) ? d3.format(".1f")(v) : "N/A");
+
+    function showHover(d: (typeof hoverData)[number]) {
+      const xv = xPos(d.key);
+      const currentY = Number.isFinite(d.value) ? y(d.value) : innerH;
+      const avgY = Number.isFinite(d.avg) ? y(d.avg) : innerH;
+
+      gHover.style("display", "block");
+      pathDog.attr("stroke-width", 4.2);
+      pathAvg.attr("stroke-width", 2.6).attr("opacity", 0.9);
+
+      hoverGuide.attr("x1", xv).attr("x2", xv).attr("y1", 0).attr("y2", innerH);
+      hoverDogDot.attr("cx", xv).attr("cy", currentY).style("display", Number.isFinite(d.value) ? "block" : "none");
+      hoverAvgDot.attr("cx", xv).attr("cy", avgY).style("display", Number.isFinite(d.avg) ? "block" : "none");
+
+      hoverTipText.selectAll("*").remove();
+      hoverTipText.append("tspan").attr("x", 0).attr("dy", "0").text(d.label);
+      hoverTipText
+        .append("tspan")
+        .attr("x", 0)
+        .attr("dy", "1.25em")
+        .style("font-weight", "500")
+        .text(`Current: ${formatVal(d.value)}`);
+      hoverTipText
+        .append("tspan")
+        .attr("x", 0)
+        .attr("dy", "1.25em")
+        .style("font-weight", "500")
+        .text(`Average: ${formatVal(d.avg)}`);
+
+      const textNode = hoverTipText.node();
+      if (!textNode) return;
+
+      const textBox = textNode.getBBox();
+      const padX = 8;
+      const padY = 6;
+      const tipW = textBox.width + padX * 2;
+      const tipH = textBox.height + padY * 2;
+      const tipX = Math.max(0, Math.min(innerW - tipW, xv - tipW / 2));
+      const tipY = Math.max(0, Math.min(innerH - tipH - 6, Math.min(currentY, avgY) - tipH - 10));
+
+      hoverTip.attr("transform", `translate(${tipX},${tipY})`);
+      hoverTipBg.attr("width", tipW).attr("height", tipH);
+      hoverTipText.attr("x", padX).attr("y", padY + 10);
+    }
+
+    function hideHover() {
+      gHover.style("display", "none");
+      pathDog.attr("stroke-width", 3.5);
+      pathAvg.attr("stroke-width", 2).attr("opacity", 0.7);
+    }
+
+    const hitZones = gInteraction
+      .selectAll<SVGRectElement, (typeof hoverData)[number]>("rect.hit-zone")
+      .data(hoverData, (d) => d.key);
+
+    hitZones.exit().remove();
+
+    hitZones
+      .join("rect")
+      .attr("class", "hit-zone")
+      .attr("x", (d) => xPos(d.key) - hitWidth / 2)
+      .attr("y", 0)
+      .attr("width", hitWidth)
+      .attr("height", innerH)
+      .attr("fill", "transparent")
+      .style("cursor", "crosshair")
+      .on("mouseenter", function (_, d) {
+        showHover(d);
+      })
+      .on("mousemove", function (_, d) {
+        showHover(d);
+      })
+      .on("mouseleave", hideHover);
+
+    svg.on("mouseleave", hideHover);
   }
 
   function destroy() {

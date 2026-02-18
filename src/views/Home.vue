@@ -40,7 +40,7 @@ const scatterData = computed<ScatterDatum[]>(() =>
 
 const highlightId = computed(() => selectedDog.value?.name ?? null);
 
-const filterEnabled = ref(true);
+const filterEnabled = ref(false);
 const traitEnabled = reactive<Record<TraitKey, boolean>>(createDefaultTraitEnabled());
 
 function toggleTrait(k: TraitKey, v: boolean) {
@@ -417,7 +417,7 @@ onMounted(() => {
   color: #6b7280;
 }
 .beeswarmSection {
-  height: 560px;
+  height: 700px;
 }
 
 .card.beeswarm {
@@ -428,6 +428,6 @@ onMounted(() => {
 
 .beeswarmArea {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 620px;
 }
 </style>

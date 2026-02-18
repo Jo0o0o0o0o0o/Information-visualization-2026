@@ -20,7 +20,7 @@ export type BeeswarmHandlers = {
 export function createBeeswarmPlot(svgEl: SVGSVGElement, handlers: BeeswarmHandlers = {}) {
   const svg = d3.select(svgEl);
 
-  const margin = { top: 20, right: 20, bottom: 70, left: 20 };
+  const margin = { top: 24, right: 24, bottom: 92, left: 24 };
 
   const root = svg.append("g");
   const gx = root.append("g");

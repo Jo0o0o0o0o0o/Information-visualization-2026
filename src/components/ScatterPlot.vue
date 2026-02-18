@@ -24,8 +24,6 @@ const emit = defineEmits<{
   (e: "selectDog", id: string | number): void;
 }>();
 
-const wrapRef = ref<HTMLDivElement | null>(null);
-
 const svgRef = ref<SVGSVGElement | null>(null);
 let chart: ReturnType<typeof createScatterPlot> | null = null;
 
@@ -33,11 +31,11 @@ const hovered = ref<ScatterDatum | null>(null);
 const tip = ref({ x: 0, y: 0, show: false });
 
 function setTipFromEvent(ev: PointerEvent) {
-  const wrap = wrapRef.value;
-  if (!wrap) return;
-  const r = wrap.getBoundingClientRect();
-  tip.value.x = ev.clientX - r.left + 12;
-  tip.value.y = ev.clientY - r.top + 12;
+  const chartArea = chartAreaRef.value;
+  if (!chartArea) return;
+  const r = chartArea.getBoundingClientRect();
+  tip.value.x = ev.clientX - r.left + 8;
+  tip.value.y = ev.clientY - r.top + 8;
 }
 
 function resizeAndDraw() {
@@ -131,7 +129,7 @@ function onToggleTrait(k: TraitKey, e: Event) {
 
 <template>
   <!--  根容器加 ref，用于 tooltip 定位 -->
-  <div class="wrap" ref="wrapRef">
+  <div class="wrap">
     <div class="filterBar">
       <div class="filterMain">
         <label class="switch" :class="{ on: filterEnabled, disabled: !hasSelectedDog }">
