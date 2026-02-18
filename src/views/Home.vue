@@ -11,7 +11,7 @@ import { computeAverageTraits } from "@/utils/computeAverageTraits";
 import BeeswarmPlot from "@/components/BeeWarmPlot.vue";
 import { traitLabels } from "@/utils/traitFilter";
 import theDogApiBreeds from "@/data/dogs_thedogapi_breeds.json";
-import { findBreedGroupByName } from "@/utils/fuzzyBreedGroup";
+import { findBreedGroupByName, getBreedGroupTagStyle } from "@/utils/fuzzyBreedGroup";
 import {
   TRAIT_KEYS,
   type TraitKey,
@@ -49,6 +49,9 @@ const selectedBreedGroup = computed(() => {
     theDogApiBreeds as { name: string; breed_group?: string | null }[],
   );
 });
+const selectedBreedGroupStyle = computed(() =>
+  selectedBreedGroup.value ? getBreedGroupTagStyle(selectedBreedGroup.value) : null,
+);
 
 const filterEnabled = ref(false);
 const traitEnabled = reactive<Record<TraitKey, boolean>>(createDefaultTraitEnabled());
@@ -127,7 +130,7 @@ onMounted(() => {
           <div v-else class="placeholder">狗的 image</div>
         </div>
 
-        <div v-if="selectedBreedGroup" class="breedGroupTag">
+        <div v-if="selectedBreedGroup" class="breedGroupTag" :style="selectedBreedGroupStyle">
           {{ selectedBreedGroup }}
         </div>
 
@@ -312,8 +315,6 @@ onMounted(() => {
   padding: 5px 10px;
   font-size: 12px;
   font-weight: 600;
-  background: rgb(255, 204, 0);
-  font:rgb(255, 255, 255);
 }
 
 .traitArea {
