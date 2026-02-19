@@ -38,7 +38,6 @@ const avgTraits = ref(computeAverageTraits([] as DogBreed[]));
 
 const selectedDog = computed(() => dogs.value.find((d) => d.name === selectedName.value) ?? null);
 
-// 映射成 scatter 数据（示例：身高 vs 体重）
 const scatterData = computed<ScatterDatum[]>(() =>
   filteredDogs.value.map((d) => ({
     id: d.name,
@@ -116,6 +115,73 @@ const worldPoints = computed<WorldPoint[]>(() =>
   buildDogOriginPoints(dogs.value, apiBreeds.value),
 );
 
+const UNKNOWN_BREED_GROUP_KEY = "__UNKNOWN_BREED_GROUP__";
+const selectedWorldBreedGroup = ref<string | null>(null);
+
+const worldBreedGroupTags = computed(() => {
+  const groups = new Set<string>();
+  let hasUnknown = false;
+
+  for (const d of dogs.value) {
+    const group = findBreedGroupByName(
+      d.name,
+      theDogApiBreeds as { name: string; breed_group?: string | null }[],
+    );
+
+    if (group) {
+      groups.add(group);
+      continue;
+    }
+
+    hasUnknown = true;
+  }
+
+  const sortedGroups = Array.from(groups).sort((a, b) => a.localeCompare(b));
+  const tags = sortedGroups.map((g) => ({ key: g, label: g, style: getBreedGroupTagStyle(g) }));
+
+  if (hasUnknown) {
+    tags.push({ key: UNKNOWN_BREED_GROUP_KEY, label: "Unknown", style: getBreedGroupTagStyle("Mixed") });
+  }
+
+  return tags;
+});
+
+const worldDisplayPoints = computed<WorldPoint[]>(() => {
+  const selectedGroup = selectedWorldBreedGroup.value;
+  if (!selectedGroup) return worldPoints.value;
+
+  return worldPoints.value.filter((p) => {
+    const dogName = p.dogName ?? p.label ?? p.id;
+    const group = findBreedGroupByName(
+      dogName,
+      theDogApiBreeds as { name: string; breed_group?: string | null }[],
+    );
+
+    if (selectedGroup === UNKNOWN_BREED_GROUP_KEY) {
+      return !group;
+    }
+
+    return group === selectedGroup;
+  });
+});
+const selectedCountryCode = ref<string | null>(null);
+const countryDogList = computed(() => {
+  const cc = selectedCountryCode.value;
+  if (!cc) return [] as DogBreed[];
+
+  const names = Array.from(
+    new Set(
+      worldDisplayPoints.value
+        .filter((p) => (p.countryCode ?? "").toUpperCase() === cc)
+        .map((p) => p.dogName ?? p.label ?? p.id),
+    ),
+  );
+
+  return names
+    .map((name) => dogs.value.find((d) => d.name === name))
+    .filter((d): d is DogBreed => Boolean(d));
+});
+
 function focusDogSearch() {
   nextTick(() => {
     dogSearchInput.value?.focus();
@@ -147,11 +213,9 @@ function onDocClick(e: MouseEvent) {
 }
 
 const listDogs = computed(() => {
-  const list = filteredDogs.value.slice(); // 当前筛选结果 = scatterplot 的数据源
+  const list = filteredDogs.value.slice(); // 当前筛选结�?= scatterplot 的数据源
   const sel = selectedDog.value;
   if (!sel) return list;
-
-  // 如果筛选结果里没有选中狗，也要把它插进来（否则用户会懵）
   const withoutSel = list.filter((d) => d.name !== sel.name);
   return [sel, ...withoutSel];
 });
@@ -160,13 +224,22 @@ function onSelectDog(id: string | number) {
   selectedName.value = String(id);
 }
 
+function onSelectCountry(countryCode: string) {
+  selectedCountryCode.value = countryCode.toUpperCase();
+}
+
+function toggleWorldBreedGroup(groupKey: string) {
+  selectedWorldBreedGroup.value = selectedWorldBreedGroup.value === groupKey ? null : groupKey;
+  selectedCountryCode.value = null;
+}
+
 function sendToCompare() {
   const dog = selectedDog.value;
   if (!dog) return;
   const name = dog.name;
 
   try {
-    // fallback：如果路由 query 丢了，Compare 页面还能从 localStorage 接到
+    // fallback：如果路�?query 丢了，Compare 页面还能�?localStorage 接到
     const queueKey = "compare_add_queue";
     const rawQueue = localStorage.getItem(queueKey);
     const queue = rawQueue ? (JSON.parse(rawQueue) as unknown) : [];
@@ -183,7 +256,7 @@ function sendToCompare() {
     // ignore storage failures
   }
 
-  // 通过 query 把名字带去 Compare
+  // 通过 query 把名字带�?Compare
 }
 
 const beeswarmTraits = computed<TraitKey[]>(() => {
@@ -208,7 +281,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="home">
-    <!-- 上面三块卡片区 -->
+    <!-- 上面三块卡片�?-->
     <section class="top">
       <div class="card left">
         <div class="title">Select a dog</div>
@@ -216,7 +289,7 @@ onBeforeUnmount(() => {
         <div class="dogSelect" ref="dogSelectRoot">
           <button class="select selectTrigger" type="button" @click="toggleDogSelect">
             <span class="selectValue">{{ selectedDog?.name ?? "Select a breed" }}</span>
-            <span class="selectCaret">{{ dogSelectOpen ? "▴" : "▾" }}</span>
+            <span class="selectCaret">{{ dogSelectOpen ? "^" : "v" }}</span>
           </button>
 
           <div v-if="dogSelectOpen" class="dogSelectPanel">
@@ -323,14 +396,58 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </section>
-    <!-- [ADDED] world map -->
-<div class="card mapCard">
-  <div class="title">Breed origins (world)</div>
-  <div class="mapArea">
-    <WorldPlot :points="worldPoints" :highlightId="highlightId" @selectDog="onSelectDog" />
-  </div>
-  <div class="hint">Showing {{ worldPoints.length }} breeds with country info.</div>
-</div>
+    <div class="card mapCard">
+      <div class="title">Breed origins (world)</div>
+      <div class="worldLayout">
+        <div class="countryDogs">
+          <div class="listHeader">
+            <div class="title">Dogs shown</div>
+            <div class="subtitle">
+              {{ selectedCountryCode ?? "Click a country" }}
+            </div>
+          </div>
+
+          <div class="groupTags">
+            <button
+              v-for="tag in worldBreedGroupTags"
+              :key="`group-${tag.key}`"
+              class="groupTag"
+              :style="tag.style"
+              :class="{ active: selectedWorldBreedGroup === tag.key }"
+              @click="toggleWorldBreedGroup(tag.key)"
+            >
+              {{ tag.label }}
+            </button>
+          </div>
+
+          <div class="countryBody">
+            <button
+              v-for="d in countryDogList"
+              :key="`country-${d.name}`"
+              class="row"
+              :class="{ active: d.name === selectedName }"
+              @click="selectedName = d.name"
+            >
+              <img :src="d.image_link" :alt="d.name" />
+              <div class="name">{{ d.name }}</div>
+            </button>
+            <div v-if="countryDogList.length === 0" class="empty">
+              Click a country dot on the map to show dogs from that country.
+            </div>
+          </div>
+        </div>
+
+        <div class="mapArea">
+          <WorldPlot
+            :points="worldDisplayPoints"
+            :highlightId="highlightId"
+            @selectDog="onSelectDog"
+            @selectCountry="onSelectCountry"
+          />
+        </div>
+      </div>
+      <div class="hint">Showing {{ worldDisplayPoints.length }} breeds with country info.</div>
+    </div>
     <section class="beeswarmSection">
       <div class="card beeswarm">
         <div class="title">Trait distribution (beeswarm)</div>
@@ -394,11 +511,11 @@ onBeforeUnmount(() => {
 
 .midBody {
   flex: 1 1 auto;
-  min-height: 0; /* 重要：防止 flex 子项计算高度出问题 */
+  min-height: 0; /* 重要：防�?flex 子项计算高度出问�?*/
   position: relative;
 }
 
-/* [ADDED] 让组件自身高度=100%，它的 bottom:0 才会贴到 midBody 底部 */
+/* [ADDED] 让组件自身高�?100%，它�?bottom:0 才会贴到 midBody 底部 */
 .midChart {
   height: 100%;
 }
@@ -609,7 +726,7 @@ onBeforeUnmount(() => {
 }
 
 .row::after {
-  content: "›";
+  content: ">";
   position: absolute;
   right: 12px;
   top: 50%;
@@ -629,7 +746,7 @@ onBeforeUnmount(() => {
   background: #ffdf5d;
 }
 
-/* 可选：让选中的更“像选中”一点 */
+/* 可选：让选中的更“像选中”一�?*/
 .row.active .name {
   font-weight: 700;
 }
@@ -649,7 +766,7 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 12px; /* 为右侧箭头留出空间 */
+  padding-right: 12px; /* 为右侧箭头留出空�?*/
 }
 
 .empty {
@@ -661,8 +778,80 @@ onBeforeUnmount(() => {
   color: #6b7280;
 }
 
-.mapArea {
+.worldLayout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 18px;
   height: 520px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.countryDogs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.groupTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.groupTag {
+  
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.groupTag:hover {
+  background: #fff8e5;
+}
+
+.groupTag.active {
+  border-color: rgba(245, 158, 11, 0.95);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.countryBody {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 6px;
+  padding-bottom: 4px;
+}
+
+.countryBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.countryBody::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.countryBody::-webkit-scrollbar-thumb {
+  background: rgba(206, 214, 225, 0.6);
+  border-radius: 999px;
+}
+
+.countryBody::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.85);
+}
+
+.mapArea {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 .hint {
   margin-top: 8px;
@@ -684,3 +873,9 @@ onBeforeUnmount(() => {
   min-height: 620px;
 }
 </style>
+
+
+
+
+
+

@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "selectDog", id: string): void;
+  (e: "selectCountry", countryCode: string): void;
 }>();
 
 const wrapRef = ref<HTMLDivElement | null>(null);
@@ -52,7 +53,10 @@ onMounted(() => {
     },
     onMove: (_d, ev) => setTipFromEvent(ev),
     onLeave: () => (tip.value.show = false),
-    onClick: (d) => emit("selectDog", d.id),
+    onClick: (d) => {
+      emit("selectDog", d.id);
+      if (d.countryCode) emit("selectCountry", d.countryCode);
+    },
   });
 
   plot.update(props.points);

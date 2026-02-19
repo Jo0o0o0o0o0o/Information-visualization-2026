@@ -1,27 +1,35 @@
-// src/viz/createWorldPlot.ts
 import * as d3 from "d3";
 
 export type WorldPoint = {
-  id: string;        // 唯一 key（用狗名就行）
+  id: string;
   lon: number;
   lat: number;
-  label?: string;    // tooltip title
-  subtitle?: string; // tooltip subtitle
+  label?: string;
+  subtitle?: string;
+  countryCode?: string;
+  dogName?: string;
+};
+
+type AggregatedWorldPoint = {
+  id: string;
+  lon: number;
+  lat: number;
+  label: string;
+  subtitle: string;
+  countryCode?: string;
+  dogIds: string[];
+  dogNames: string[];
+  count: number;
 };
 
 export type CreateWorldPlotOptions = {
   width: number;
   height: number;
-
-  // 建议你把 world.geojson 放 public/，然后默认用这个
   worldGeoJsonUrl?: string;
-
-  // 交互回调（Vue 去做 tooltip / 选中）
   onHover?: (d: WorldPoint, ev: MouseEvent) => void;
   onMove?: (d: WorldPoint, ev: MouseEvent) => void;
   onLeave?: () => void;
   onClick?: (d: WorldPoint, ev: MouseEvent) => void;
-
   highlightId?: string | null;
 };
 
@@ -41,7 +49,6 @@ export function createWorldPlot(
   let width = opt.width;
   let height = opt.height;
 
-  // ---- SVG root ----
   const svg = d3
     .select(container)
     .append("svg")
@@ -53,15 +60,13 @@ export function createWorldPlot(
   const gLand = gRoot.append("g");
   const gPts = gRoot.append("g");
 
-  // ---- projection/path ----
   const projection = d3.geoNaturalEarth1();
   const path = d3.geoPath(projection);
 
-  // ---- state ----
   let points: WorldPoint[] = [];
+  let aggregatedPoints: AggregatedWorldPoint[] = [];
   let highlightId: string | null = opt.highlightId ?? null;
 
-  // ---- zoom ----
   const zoom = d3
     .zoom<SVGSVGElement, unknown>()
     .scaleExtent([1, 7])
@@ -71,22 +76,77 @@ export function createWorldPlot(
 
   svg.call(zoom as any);
 
-  function applyHighlight(sel: d3.Selection<SVGCircleElement, WorldPoint, SVGGElement, unknown>) {
+  function getBaseRadius(d: AggregatedWorldPoint): number {
+    return 3.2 + Math.sqrt(d.count) * 1.7;
+  }
+
+  function applyHighlight(
+    sel: d3.Selection<SVGCircleElement, AggregatedWorldPoint, SVGGElement, unknown>,
+  ) {
     sel
-      .attr("r", (d) => (highlightId && d.id === highlightId ? 6.5 : 3.6))
-      .attr("opacity", (d) => (highlightId && d.id !== highlightId ? 0.25 : 0.85));
+      .attr("r", (d) =>
+        highlightId && d.dogIds.includes(highlightId) ? getBaseRadius(d) + 1.8 : getBaseRadius(d),
+      )
+      .attr("opacity", (d) => (highlightId && !d.dogIds.includes(highlightId) ? 0.25 : 0.88));
+  }
+
+  function aggregateByCountry(rawPoints: WorldPoint[]): AggregatedWorldPoint[] {
+    const byCountry = new Map<string, AggregatedWorldPoint>();
+
+    for (const p of rawPoints) {
+      const cc = p.countryCode?.trim().toUpperCase();
+      const key = cc || `${p.lon.toFixed(3)}:${p.lat.toFixed(3)}`;
+      const existing = byCountry.get(key);
+
+      if (!existing) {
+        byCountry.set(key, {
+          id: key,
+          lon: p.lon,
+          lat: p.lat,
+          label: cc || p.label || key,
+          subtitle: "",
+          countryCode: cc,
+          dogIds: [p.id],
+          dogNames: [p.dogName || p.label || p.id],
+          count: 1,
+        });
+        continue;
+      }
+
+      existing.dogIds.push(p.id);
+      existing.dogNames.push(p.dogName || p.label || p.id);
+      existing.count += 1;
+    }
+
+    for (const item of byCountry.values()) {
+      item.subtitle = item.dogNames.join(", ");
+    }
+
+    return Array.from(byCountry.values());
+  }
+
+  function toWorldPointPayload(d: AggregatedWorldPoint): WorldPoint {
+    return {
+      id: d.dogIds[0] ?? d.id,
+      lon: d.lon,
+      lat: d.lat,
+      label: d.label,
+      subtitle: d.subtitle,
+      countryCode: d.countryCode,
+      dogName: d.dogNames[0],
+    };
   }
 
   function drawPoints() {
     const sel = gPts
-      .selectAll<SVGCircleElement, WorldPoint>("circle")
-      .data(points, (d: any) => d.id)
+      .selectAll<SVGCircleElement, AggregatedWorldPoint>("circle")
+      .data(aggregatedPoints, (d: any) => d.id)
       .join(
         (enter) =>
           enter
             .append("circle")
-            .attr("r", 3.6)
-            .attr("opacity", 0.85)
+            .attr("r", 3.2)
+            .attr("opacity", 0.88)
             .attr("stroke", "#111827")
             .attr("stroke-width", 0.5),
         (update) => update,
@@ -97,11 +157,10 @@ export function createWorldPlot(
 
     applyHighlight(sel);
 
-    // interaction -> callbacks
-    sel.on("mouseenter", (ev, d) => opt.onHover?.(d, ev as any));
-    sel.on("mousemove", (ev, d) => opt.onMove?.(d, ev as any));
+    sel.on("mouseenter", (ev, d) => opt.onHover?.(toWorldPointPayload(d), ev as any));
+    sel.on("mousemove", (ev, d) => opt.onMove?.(toWorldPointPayload(d), ev as any));
     sel.on("mouseleave", () => opt.onLeave?.());
-    sel.on("click", (ev, d) => opt.onClick?.(d, ev as any));
+    sel.on("click", (ev, d) => opt.onClick?.(toWorldPointPayload(d), ev as any));
   }
 
   async function drawWorldIfNeeded() {
@@ -122,17 +181,17 @@ export function createWorldPlot(
     drawPoints();
   }
 
-  // 初次绘制世界地图
   void drawWorldIfNeeded();
 
   function update(next: WorldPoint[]) {
     points = next;
+    aggregatedPoints = aggregateByCountry(points);
     drawPoints();
   }
 
   function setHighlight(id: string | null) {
     highlightId = id;
-    const sel = gPts.selectAll<SVGCircleElement, WorldPoint>("circle");
+    const sel = gPts.selectAll<SVGCircleElement, AggregatedWorldPoint>("circle");
     applyHighlight(sel);
   }
 
@@ -141,10 +200,6 @@ export function createWorldPlot(
     height = Math.max(10, h);
 
     svg.attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`);
-
-    // 重新 fit projection（地图要跟着新尺寸缩放）
-    // 重新加载 geojson 太浪费：我们直接用现有 path 的 datum？
-    // 最稳：再取一次 features（数量不大，OK）
     void drawWorldIfNeeded();
   }
 
