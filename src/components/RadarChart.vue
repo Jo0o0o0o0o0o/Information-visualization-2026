@@ -27,6 +27,57 @@ function legendColor(idx: number) {
   return RADAR_COLORS[idx % RADAR_COLORS.length];
 }
 
+function lightenColorKeepAlpha(color: string, factor = 0.75) {
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  const lighten = (v: number) => clamp(v + (255 - v) * factor);
+
+  if (/^#([\da-f]{3}|[\da-f]{6})$/i.test(color)) {
+    const hex = color.slice(1);
+    const full =
+      hex.length === 3
+        ? hex
+            .split("")
+            .map((c) => c + c)
+            .join("")
+        : hex;
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
+    return `rgba(${lighten(r)}, ${lighten(g)}, ${lighten(b)}, 1)`;
+  }
+
+  const match = color.match(/^rgba?\(([^)]+)\)$/i);
+  if (match) {
+    const parts = match[1].split(",").map((p) => p.trim());
+    const r = Number(parts[0]);
+    const g = Number(parts[1]);
+    const b = Number(parts[2]);
+    const a = parts[3] !== undefined ? Number(parts[3]) : 1;
+
+    if ([r, g, b, a].every((v) => Number.isFinite(v))) {
+      return `rgba(${lighten(r)}, ${lighten(g)}, ${lighten(b)}, ${a})`;
+    }
+  }
+
+  return color;
+}
+
+const tooltipStyle = computed(() => {
+  const dogIndex = hovered.value?.dogIndex;
+  if (dogIndex === null || dogIndex === undefined) {
+    return {
+      left: `${tip.value.x}px`,
+      top: `${tip.value.y}px`,
+    };
+  }
+
+  return {
+    left: `${tip.value.x}px`,
+    top: `${tip.value.y}px`,
+    backgroundColor: lightenColorKeepAlpha(legendColor(dogIndex)),
+  };
+});
+
 function setTipFromEvent(ev: PointerEvent) {
   const chartArea = chartAreaRef.value;
   if (!chartArea) return;
@@ -120,10 +171,12 @@ onBeforeUnmount(() => {
       <div
         v-if="tip.show && hovered"
         class="tooltip"
-        :style="{ left: tip.x + 'px', top: tip.y + 'px' }"
+        :style="tooltipStyle"
       >
         <div class="tTitle">{{ hovered.dogName }}</div>
-        <div class="tRow">{{ hovered.axisLabel }}: {{ hovered.value }}</div>
+        <div v-for="item in hovered.dimensions" :key="item.axisKey" class="tRow">
+          {{ item.axisLabel }}: {{ item.value }}
+        </div>
       </div>
       <div class="legend" v-if="dogs.length">
         <button
@@ -244,4 +297,3 @@ svg {
   white-space: nowrap;
 }
 </style>
-

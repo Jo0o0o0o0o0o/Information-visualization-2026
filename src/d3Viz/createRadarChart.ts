@@ -50,9 +50,11 @@ export type RadarOptions = {
 export type RadarHoverDatum = {
   dogIndex: number;
   dogName: string;
-  axisKey: RadarKey;
-  axisLabel: string;
-  value: number;
+  dimensions: Array<{
+    axisKey: RadarKey;
+    axisLabel: string;
+    value: number;
+  }>;
 };
 
 export type RadarHandlers = {
@@ -244,6 +246,18 @@ export function createRadarChart(svgEl: SVGSVGElement, handlers: RadarHandlers =
       return pts;
     }
 
+    function hoverDatumOf(dog: RadarDog, dogIndex: number): RadarHoverDatum {
+      return {
+        dogIndex,
+        dogName: dog.name,
+        dimensions: AXES.map((axis) => ({
+          axisKey: axis.key,
+          axisLabel: axis.label,
+          value: clamp((dog as any)[axis.key], minV, maxV),
+        })),
+      };
+    }
+
     groups
       .selectAll("path.area")
       .data((dog, dogIndex) => [{ dog, dogIndex }])
@@ -255,6 +269,15 @@ export function createRadarChart(svgEl: SVGSVGElement, handlers: RadarHandlers =
       .attr("stroke", (d) => colorAt(d.dogIndex))
       .attr("stroke-width", 2.2)
       .style("cursor", "pointer")
+      .on("pointerenter", (event, d) => {
+        handlers.onHover?.(hoverDatumOf(d.dog, d.dogIndex), event as PointerEvent);
+      })
+      .on("pointermove", (event, d) => {
+        handlers.onMove?.(hoverDatumOf(d.dog, d.dogIndex), event as PointerEvent);
+      })
+      .on("pointerleave", (event) => {
+        handlers.onLeave?.(event as PointerEvent);
+      })
       .on("click", (event, d) => {
         handlers.onClick?.(d.dogIndex, event as PointerEvent);
       });
@@ -287,33 +310,6 @@ export function createRadarChart(svgEl: SVGSVGElement, handlers: RadarHandlers =
       .attr("stroke-width", 0.8)
       .attr("opacity", 0.95)
       .style("cursor", "pointer")
-      .on("pointerenter", (event, d) => {
-        handlers.onHover?.(
-          {
-            dogIndex: d.dogIndex,
-            dogName: d.dogName,
-            axisKey: d.axisKey,
-            axisLabel: d.axisLabel,
-            value: d.value,
-          },
-          event as PointerEvent,
-        );
-      })
-      .on("pointermove", (event, d) => {
-        handlers.onMove?.(
-          {
-            dogIndex: d.dogIndex,
-            dogName: d.dogName,
-            axisKey: d.axisKey,
-            axisLabel: d.axisLabel,
-            value: d.value,
-          },
-          event as PointerEvent,
-        );
-      })
-      .on("pointerleave", (event) => {
-        handlers.onLeave?.(event as PointerEvent);
-      })
       .on("click", (event, d) => {
         handlers.onClick?.(d.dogIndex, event as PointerEvent);
       });

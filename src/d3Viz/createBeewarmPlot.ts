@@ -19,8 +19,8 @@ export type BeeswarmHandlers = {
 
 export function createBeeswarmPlot(svgEl: SVGSVGElement, handlers: BeeswarmHandlers = {}) {
   const svg = d3.select(svgEl);
-
-  const margin = { top: 24, right: 24, bottom: 92, left: 24 };
+  const labelRotateDeg = -35;
+  const labelFontSize = 11;
 
   const root = svg.append("g");
   const gx = root.append("g");
@@ -48,31 +48,54 @@ export function createBeeswarmPlot(svgEl: SVGSVGElement, handlers: BeeswarmHandl
     svg.attr("width", opt.width).attr("height", opt.height);
     svg.style("touch-action", "none");
 
+    const traits = opt.traits;
+    const labelTexts = traits.map((t) => opt.traitLabels[t] ?? t);
+    const maxLabelChars = Math.max(0, ...labelTexts.map((txt) => txt.length));
+    const approxLabelWidth = maxLabelChars * labelFontSize * 0.58;
+    const rotateRad = Math.abs((labelRotateDeg * Math.PI) / 180);
+    const labelVerticalReach = Math.sin(rotateRad) * approxLabelWidth;
+    const labelHorizontalReach = Math.cos(rotateRad) * approxLabelWidth;
+    const margin = {
+      top: 42,
+      right: Math.max(56, Math.ceil(labelHorizontalReach * 0.22 + 28)),
+      bottom: Math.max(132, Math.ceil(64 + labelVerticalReach + labelFontSize * 1.6)),
+      left: Math.max(56, Math.ceil(labelHorizontalReach * 0.42 + 28)),
+    };
+
     const innerW = Math.max(10, opt.width - margin.left - margin.right);
     const innerH = Math.max(10, opt.height - margin.top - margin.bottom);
 
     root.attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const traits = opt.traits;
 
     // ✅ X = 维度
     const xBand = d3
       .scaleBand<string>()
       .domain(traits)
       .range([0, innerW])
-      .paddingInner(0.25);
+      .paddingInner(0.25)
+      .paddingOuter(0.08);
 
     // ✅ Y = 0..5
+    const r = 4;
+    const yTopPad = r + 12;
+    const yBottomPad = r + 2;
+    const yDomainTop = 5.15;
+
     const yScale = d3
       .scaleLinear()
-      .domain([0, 5])
-      .range([innerH, 0]);
+      .domain([0, yDomainTop])
+      .range([innerH - yBottomPad, yTopPad]);
 
     // axes
     gx.attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(xBand).tickFormat(() => "")); // 标签我们自己画（更可控）
 
-    gy.call(d3.axisLeft(yScale).ticks(6).tickFormat(d3.format(".0f")));
+    gy.call(
+      d3
+        .axisLeft(yScale)
+        .tickValues([0, 1, 2, 3, 4, 5])
+        .tickFormat(d3.format(".0f")),
+    );
 
     // X labels（维度标签，太长就旋转）
     const xLabels = xLabelsLayer.selectAll<SVGTextElement, string>("text").data(traits, (d) => d);
@@ -81,18 +104,17 @@ export function createBeeswarmPlot(svgEl: SVGSVGElement, handlers: BeeswarmHandl
     xLabels   
       .join("text")
       .attr("x", (t) => (xBand(t)! + xBand.bandwidth() / 2))
-      .attr("y", innerH + 48)
+      .attr("y", innerH + 58)
       .attr("text-anchor", "end")
       .attr("transform", (t) => {
         const x = xBand(t)! + xBand.bandwidth() / 2;
-        const y = innerH + 48;
-        return `rotate(-35, ${x}, ${y})`;
+        const y = innerH + 58;
+        return `rotate(${labelRotateDeg}, ${x}, ${y})`;
       })
-      .style("font-size", "12px")
+      .style("font-size", `${labelFontSize}px`)
       .text((t) => opt.traitLabels[t] ?? t);
 
     // beeswarm per trait (vertical)
-    const r = 4;
     const byTrait = d3.group(nodes, (n) => n.trait);
 
     for (const t of traits) {
@@ -113,6 +135,10 @@ export function createBeeswarmPlot(svgEl: SVGSVGElement, handlers: BeeswarmHandl
         .stop();
 
       for (let i = 0; i < 110; i++) sim.tick();
+
+      for (const n of col) {
+        n.y = Math.max(yTopPad, Math.min(innerH - yBottomPad, n.y ?? yScale(n.value)));
+      }
     }
 
     const circles = pointsLayer

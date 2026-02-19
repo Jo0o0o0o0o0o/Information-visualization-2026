@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import type { DogBreed } from "@/types/dogBreed";
 import { fuzzyFilter } from "@/utils/fuzzySearch";
@@ -17,7 +17,7 @@ const emit = defineEmits<{
   (e: "toggleFocus", index: number): void;
 }>();
 
-// 鍝釜鍗＄墖锟?dropdown 鎵撳紑
+// 閸濐亙閲滈崡锛勫閿?dropdown 閹垫挸绱?
 const openIndex = ref<number | null>(null);
 const query = ref("");
 const root = ref<HTMLElement | null>(null);
@@ -82,7 +82,7 @@ function filteredList(currentIndex: number) {
       .filter(Boolean)
   );
 
-  // 杩囨护鎺夊凡閫夌殑
+  // 鏉╁洦鎶ら幒澶婂嚒闁娈?
   const available = props.dogs.filter(d => !selectedNames.has(d.name));
 
   return fuzzyFilter(available, query.value, (d) => d.name, { limit: 80 });
@@ -101,7 +101,7 @@ function filteredList(currentIndex: number) {
     hasTag: !!slotBreedGroups[i - 1],
   }"
 >
-      <!-- 涓婂崐锟? 锟?宸诧拷?-->
+      <!-- 娑撳﹤宕愰敓? 閿?瀹歌鎷?-->
       <button
         v-if="!props.slots[i - 1]"
         class="visual addArea"
@@ -125,47 +125,49 @@ function filteredList(currentIndex: number) {
   />
 </div>
 
-      <!-- 涓嬪崐锛歋elect -->
+      <!-- 娑撳宕愰敍姝媏lect -->
 
-      <div class="selectRow">
-        <button class="trigger" @click="toggle(i - 1)">
-          <span class="txt">
-            {{ props.slots[i - 1]?.name ?? "choose dogs" }}
-          </span>
-          <span class="caret">{{ openIndex === i - 1 ? "^" : "v" }}</span>
-        </button>
-        <div
-          v-if="slotBreedGroups[i - 1]"
-          class="breedTag"
-          :style="breedGroupStyle(slotBreedGroups[i - 1])"
-        >
-          {{ slotBreedGroups[i - 1] }}
-        </div>
-      </div>
-      <!-- dropdown panel -->
-      <div v-if="openIndex === i - 1" class="panel"data-open="true">
-        <div class="searchRow">
-          <input v-model="query" placeholder="Search dogs" />
-          <button
-            v-if="props.slots[i - 1]"
-            class="clearBtn"
-            @click="clear(i - 1)"
-          >
-            Clear
+      <div class="dropdownWrap">
+        <div class="selectRow">
+          <button class="trigger" @click="toggle(i - 1)">
+            <span class="txt">
+              {{ props.slots[i - 1]?.name ?? "choose dogs" }}
+            </span>
+            <span class="caret">{{ openIndex === i - 1 ? "^" : "v" }}</span>
           </button>
-        </div>
-
-        <div class="list">
-          <button
-            v-for="d in filteredList(i-1)"
-            :key="d.name"
-            class="row"
-            @click="pick(i - 1, d)"
+          <div
+            v-if="slotBreedGroups[i - 1]"
+            class="breedTag"
+            :style="breedGroupStyle(slotBreedGroups[i - 1])"
           >
-            {{ d.name }}
-          </button>
+            {{ slotBreedGroups[i - 1] }}
+          </div>
+        </div>
+        <!-- dropdown panel -->
+        <div v-if="openIndex === i - 1" class="panel" data-open="true">
+          <div class="searchRow">
+            <input v-model="query" placeholder="Search dogs" />
+            <button
+              v-if="props.slots[i - 1]"
+              class="clearBtn"
+              @click="clear(i - 1)"
+            >
+              Clear
+            </button>
+          </div>
 
-          <div v-if="filteredList(i-1).length === 0" class="empty">No results</div>
+          <div class="list">
+            <button
+              v-for="d in filteredList(i - 1)"
+              :key="d.name"
+              class="row"
+              @click="pick(i - 1, d)"
+            >
+              {{ d.name }}
+            </button>
+
+            <div v-if="filteredList(i - 1).length === 0" class="empty">No results</div>
+          </div>
         </div>
       </div>
     </div>
@@ -189,25 +191,25 @@ function filteredList(currentIndex: number) {
   min-height: 160px;
   position: relative;
 }
-/* 锟?focus锛氭贰榛勮壊鑳屾櫙 */
+/* 閿?focus閿涙碍璐版鍕閼冲本娅?*/
 .slot.focused {
   background: #fff6cc;
 }
 
-/* 锟?鍏跺畠鍗＄墖鍙樻贰锛堜綘涔熷彲浠ヨ皟寰楁洿杞伙級 */
+/* 閿?閸忚泛鐣犻崡锛勫閸欐ɑ璐伴敍鍫滅稑娑旂喎褰叉禒銉ㄧ殶瀵版娲挎潪浼欑礆 */
 .slot.dim {
   opacity: 0.45;
 }
 
 .visual {
   width: 100%;
-  aspect-ratio: 1 / 1;   /* 锟?寮哄埗姝ｆ柟锟?*/
+  aspect-ratio: 1 / 1;   /* 閿?瀵搫鍩楀锝嗘煙閿?*/
   border-radius: 16px;
   background: #e9e9e9;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;      /* 锟?鍥剧墖瓒呭嚭瑁佸壀 */
+  overflow: hidden;      /* 閿?閸ュ墽澧栫搾鍛毉鐟佷礁澹€ */
   position: relative;
 }
 
@@ -223,19 +225,19 @@ function filteredList(currentIndex: number) {
 }
 
 .label {
-  display: none;   /* 涓嶅啀鏄剧ず Add 鏂囧瓧 */
+  display: none;   /* 娑撳秴鍟€閺勫墽銇?Add 閺傚洤鐡?*/
 }
 
-/* 閫変腑鐘讹拷?*/
+/* 闁鑵戦悩璁规嫹?*/
 .picked {
   padding: 0;
 }
 
-/* 锟?鍥剧墖濉弧鏁翠釜鏂瑰潡 */
+/* 閿?閸ュ墽澧栨繅顐ｅ姬閺佺繝閲滈弬鐟版健 */
 .picked-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;   /* 鑷€傚簲瑁佸壀 */
+  object-fit: cover;   /* 閼奉亪鈧倸绨茬憗浣稿 */
   display: block;
 }
 /* Dropdown */
@@ -257,6 +259,9 @@ function filteredList(currentIndex: number) {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.dropdownWrap {
+  position: relative;
 }
 .txt {
   opacity: 0.9;
@@ -284,9 +289,9 @@ function filteredList(currentIndex: number) {
 
 .panel {
   position: absolute;
-  left: 14px;
-  right: 14px;
-  top: calc(14px + 90px + 12px + 38px + 6px); /* 鍗＄墖鍐呴儴瀹氫綅 */
+  left: 0;
+  right: 0;
+  top: 0;
   background: white;
   border: 1px solid rgba(0,0,0,0.14);
   border-radius: 12px;
@@ -342,3 +347,4 @@ function filteredList(currentIndex: number) {
 .row:hover { background: #f0f0f0; }
 .empty { padding: 12px; opacity: 0.7; }
 </style>
+

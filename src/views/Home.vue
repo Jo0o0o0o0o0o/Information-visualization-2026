@@ -889,7 +889,7 @@ onBeforeUnmount(() => {
   opacity: 0.75;
 }
 .beeswarmSection {
-  height: 700px;
+  height: 860px;
 }
 
 .card.beeswarm {
@@ -900,7 +900,8 @@ onBeforeUnmount(() => {
 
 .beeswarmArea {
   flex: 1 1 auto;
-  min-height: 620px;
+  min-height: 780px;
 }
 </style>
+
 

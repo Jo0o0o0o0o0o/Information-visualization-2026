@@ -160,7 +160,7 @@ watchEffect(() => {
         </div>
 
         <div class="panel boxPanel">
-          <h3>箱型</h3>
+          <h3>BoxPlotChart</h3>
           <BoxPlotChart
             :allDogs="dogs"
             :selectedDogs="selectedDogs"

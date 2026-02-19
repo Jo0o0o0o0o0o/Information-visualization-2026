@@ -139,17 +139,20 @@ onBeforeUnmount(() => {
 .wrap {
   height: 100%;
   width: 100%;
+  min-height: 780px;
 }
 
 .chartArea {
   position: relative;
   height: 100%;
   width: 100%;
+  min-height: 780px;
 }
 
 svg {
   width: 100%;
   height: 100%;
+  min-height: 780px;
   display: block;
 }
 
