@@ -24,7 +24,7 @@ let ro: ResizeObserver | null = null;
 const dogs = computed(() => props.dogs ?? []);
 
 function legendColor(idx: number) {
-  return RADAR_COLORS[idx % RADAR_COLORS.length];
+  return RADAR_COLORS[idx % RADAR_COLORS.length] ?? "#f59e0b";
 }
 
 function lightenColorKeepAlpha(color: string, factor = 0.75) {
@@ -47,8 +47,9 @@ function lightenColorKeepAlpha(color: string, factor = 0.75) {
   }
 
   const match = color.match(/^rgba?\(([^)]+)\)$/i);
-  if (match) {
-    const parts = match[1].split(",").map((p) => p.trim());
+  const channelList = match?.[1];
+  if (channelList) {
+    const parts = channelList.split(",").map((p) => p.trim());
     const r = Number(parts[0]);
     const g = Number(parts[1]);
     const b = Number(parts[2]);
