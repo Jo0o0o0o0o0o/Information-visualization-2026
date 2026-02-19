@@ -125,8 +125,9 @@ export function createRadarChart(svgEl: SVGSVGElement) {
 
     const N = AXES.length;
     // 容器中心
-    const margin = 18;
-    const r = Math.min(width, height) / 2 - margin;
+    const outerPadding = 34;
+    const axisLabelOffset = 18;
+    const r = Math.max(10, Math.min(width, height) / 2 - (outerPadding + axisLabelOffset));
     const cx = width / 2;
     const cy = height / 2;
 
@@ -187,8 +188,8 @@ export function createRadarChart(svgEl: SVGSVGElement) {
       .data(AXES)
       .join("text")
       .attr("class", "axisLabel")
-      .attr("x", (_d, i) => Math.cos(angle(i)) * (r + 14))
-      .attr("y", (_d, i) => Math.sin(angle(i)) * (r + 14))
+      .attr("x", (_d, i) => Math.cos(angle(i)) * (r + axisLabelOffset))
+      .attr("y", (_d, i) => Math.sin(angle(i)) * (r + axisLabelOffset))
       .attr("text-anchor", (_d, i) => {
         const c = Math.cos(angle(i));
         if (Math.abs(c) < 0.2) return "middle";

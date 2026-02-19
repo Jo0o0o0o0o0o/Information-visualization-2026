@@ -177,8 +177,9 @@ watchEffect(() => {
 .comparePage { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
 .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
 .panel { background: #f4f4f4; border-radius: 12px; padding: 12px; min-height: 220px; }
-.panel.big { min-height: 500px; display: flex; flex-direction: column; }
-.radarChartWrap { height: 400px; min-height: 320px; }
+.panel h3 { margin: 0 0 12px; }
+.panel.big { min-height: 580px; display: flex; flex-direction: column; }
+.radarChartWrap { height: 480px; min-height: 420px; }
 .panel.narrow { min-height: 320px; }
 .hint { opacity: 0.7; margin-top: 8px; }
 </style>

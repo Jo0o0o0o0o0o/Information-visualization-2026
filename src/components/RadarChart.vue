@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 260px;
+  min-height: 420px;
 
   border-radius: 14px;
 }
