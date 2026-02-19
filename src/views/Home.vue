@@ -280,7 +280,7 @@ function sendToCompare() {
   const name = dog.name;
 
   try {
-    // fallback：如果路�?query 丢了，Compare 页面还能�?localStorage 接到
+    // fallback：如果由 query 丢了，Compare 页面还能从 localStorage 接到
     const queueKey = "compare_add_queue";
     const rawQueue = localStorage.getItem(queueKey);
     const queue = rawQueue ? (JSON.parse(rawQueue) as unknown) : [];
@@ -297,7 +297,7 @@ function sendToCompare() {
     // ignore storage failures
   }
 
-  // 通过 query 把名字带�?Compare
+  // 通过 query 把名字带到 Compare
 }
 
 const beeswarmTraits = computed<TraitKey[]>(() => {
@@ -587,11 +587,11 @@ onBeforeUnmount(() => {
 
 .midBody {
   flex: 1 1 auto;
-  min-height: 0; /* 重要：防�?flex 子项计算高度出问�?*/
+  min-height: 0; /* 重要：防止 flex 子项计算高度出问题*/
   position: relative;
 }
 
-/* [ADDED] 让组件自身高�?100%，它�?bottom:0 才会贴到 midBody 底部 */
+/* [ADDED] 让组件自身高度 100%，它的 bottom:0 才会贴到 midBody 底部 */
 .midChart {
   height: 100%;
 }
@@ -851,7 +851,7 @@ onBeforeUnmount(() => {
   background: #ffdf5d;
 }
 
-/* 可选：让选中的更“像选中”一�?*/
+/* 可选：让选中的更“像选中”一样*/
 .row.active .name {
   font-weight: 700;
 }
@@ -871,7 +871,7 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 12px; /* 为右侧箭头留出空�?*/
+  padding-right: 12px; /* 为右侧箭头留出空间*/
 }
 
 .empty {

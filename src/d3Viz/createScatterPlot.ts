@@ -1,4 +1,4 @@
-﻿import * as d3 from "d3";
+import * as d3 from "d3";
 import type { ScatterDatum } from "@/types/viz";
 
 export type ScatterOptions = {
@@ -39,7 +39,8 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
   function update(data: ScatterDatum[], opt: ScatterOptions) {
     lastOpt = opt;
 
-    // 绌烘暟鎹篃瑕佷繚鎸佸昂瀵革紙鍚﹀垯瀹瑰櫒浼氭姈锛?    svg.attr("width", opt.width).attr("height", opt.height);
+    // 空数据也要保持尺寸（否则容器会抖）
+    svg.attr("width", opt.width).attr("height", opt.height);
 
     if (!data.length) return;
     const width = opt.width - margin.left - margin.right;
@@ -116,7 +117,7 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
       .attr("cx", (d) => xScale(d.x))
       .attr("cy", (d) => yScale(d.y))
       .attr("r", (d) => rScale(d.size ?? 0))
-      /*鍘熸湰浣犲彲鑳界洿鎺?attr 鏍峰紡锛岃繖閲屾敼鎴愮粺涓€璧?applyBaseStyle */
+      /* 原本你可能直接 attr 方式，这里改成统一用 applyBaseStyle */
       .each(function (d) {
         applyBaseStyle(d3.select(this), d);
       });

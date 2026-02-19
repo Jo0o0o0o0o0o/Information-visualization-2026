@@ -19,7 +19,7 @@ const activeAxes = ref(allAxes.filter((a) => !reducedDefaultKeys.has(a.key)));
 
 const focusIndex = ref<number | null>(null);
 
-// 点击同一�?= 取消
+// 点击同一只 = 取消
 function toggleFocus(i: number) {
   focusIndex.value = focusIndex.value === i ? null : i;
 }

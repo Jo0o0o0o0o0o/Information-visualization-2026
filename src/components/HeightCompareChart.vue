@@ -4,7 +4,7 @@ import dogHeightImg from "@/Image/dogHeight.png";
 import manHeightImg from "@/Image/ManHeight.png";
 import womanHeightImg from "@/Image/WomanHeight.png";
 
-// 缁勪欢鍙渶瑕佽繖浜涘瓧娈碉紱涓嶅己渚濊禆浣犻」鐩噷鐨勭被鍨嬫枃浠?
+// 组件只需这些字段；不依赖你项目里的类型文件
 type DogLike = {
   name: string;
   min_height_male?: number;
@@ -18,8 +18,8 @@ const props = withDefaults(
     dog: DogLike | null;
     manHeightCm?: number;
     womanHeightCm?: number;
-    maxCm?: number;        // 灏哄瓙涓婇檺
-    visualHeightPx?: number; // 鍥捐〃鍙楂樺害
+    maxCm?: number;        // 尺子上限
+    visualHeightPx?: number; // 图表可见高度
   }>(),
   {
     manHeightCm: 180,
@@ -39,7 +39,7 @@ function parseNumber(x: unknown): number {
     const nums = x.match(/\d+(\.\d+)?/g);
     if (!nums) return 0;
     const arr = nums.map(Number).filter(Number.isFinite);
-    return arr.length ? Math.max(...arr) : 0; // 鏀寔 "25-27" 鍙栨渶澶?
+    return arr.length ? Math.max(...arr) : 0; // 支持 "25-27" 取最大
   }
   return 0;
 }
@@ -89,7 +89,7 @@ const showDogTooltip = ref(false);
 
   
 const ticksCm = computed(() => {
-  const step = 20;   // 姣?20 cm 涓€涓埢搴︼紙鍙敼 10 / 25锛?
+  const step = 20;   // 每 20 cm 一个刻度（可改 10 / 25）
   const out: number[] = [];
   for (let v = 0; v <= props.maxCm; v += step) out.push(v);
   return out;
@@ -111,7 +111,7 @@ const ticksCm = computed(() => {
         </div>
       </div>
 
-      <!-- 鍥惧舰鍖?-->
+      <!-- 图形区 -->
       <div class="figures">
         <div class="col dog">
             <div class="meta">
@@ -188,11 +188,11 @@ const ticksCm = computed(() => {
   height: 300px;
   border-radius: 10px;
   background: transparent;
-  padding: 10px 0px 0px 10px; /* 缁欏乏渚у昂瀛愮暀绌洪棿 */
+  padding: 10px 0px 0px 10px; /* 给左侧尺子留空间 */
   overflow: hidden;
 }
 
-/* 灏哄瓙 */
+/* 尺子 */
 .ruler {
   position: absolute;
   left: 0;
@@ -220,12 +220,12 @@ const ticksCm = computed(() => {
   border-radius: 6px;
 }
 
-/* 涓夊垪浜虹墿/鐙?*/
+/* 三列人物/狗 */
 .figures {
   position: absolute;
-  left: 64px;   /* [CHANGED] 缁欏昂瀛愮暀绌洪棿 */
+  left: 64px;   /* [CHANGED] 给尺子留空间 */
   right: 0;
-  bottom: 0;    /* [CHANGED] 璐村簳锛屽浘鐗囧簳绾?0鍒诲害 */
+  bottom: 0;    /* [CHANGED] 贴底，图片底线 0 刻度 */
   top: 0;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -332,7 +332,7 @@ const ticksCm = computed(() => {
 
 .col.human{
   position: relative;
-  padding-top: 18px; /* 缁欎笂鏂归珮搴︽枃瀛楃暀涓€鐐圭偣绌洪棿 */
+  padding-top: 18px; /* 给上方高度文字留一点空间 */
 }
 
 .topValue{

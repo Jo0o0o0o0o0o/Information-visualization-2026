@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import type { DogBreed } from "@/types/dogBreed";
@@ -20,7 +20,7 @@ const emit = defineEmits<{
 }>();
 const router = useRouter();
 
-// 閸濐亙閲滈崡锛勫閿?dropdown 閹垫挸绱?
+// 下拉/展开状态：控制 dropdown 开关
 const openIndex = ref<number | null>(null);
 const query = ref("");
 const root = ref<HTMLElement | null>(null);
@@ -122,7 +122,7 @@ function filteredList(currentIndex: number) {
       .filter(Boolean)
   );
 
-  // 鏉╁洦鎶ら幒澶婂嚒闁娈?
+  // 已选中的狗不再出现在列表
   const available = props.dogs.filter(d => !selectedNames.has(d.name));
 
   return fuzzyFilter(available, query.value, (d) => d.name, { limit: 80 });
@@ -146,7 +146,7 @@ function filteredList(currentIndex: number) {
     hasTag: !!slotBreedGroups[i - 1],
   }"
 >
-      <!-- 娑撳﹤宕愰敓? 閿?瀹歌鎷?-->
+      <!-- 空槽位：点击 Add -->
       <button
         v-if="!props.slots[i - 1]"
         class="visual addArea"
@@ -170,7 +170,7 @@ function filteredList(currentIndex: number) {
   />
 </div>
 
-      <!-- 娑撳宕愰敍姝媏lect -->
+      <!-- 已选：点击切换 Select -->
 
       <div class="dropdownWrap">
         <div class="selectRow">
@@ -238,25 +238,25 @@ function filteredList(currentIndex: number) {
   min-height: 160px;
   position: relative;
 }
-/* 閿?focus閿涙碍璐版鍕閼冲本娅?*/
+/* focus 时高亮背景 */
 .slot.focused {
   background: #fff6cc;
 }
 
-/* 閿?閸忚泛鐣犻崡锛勫閸欐ɑ璐伴敍鍫滅稑娑旂喎褰叉禒銉ㄧ殶瀵版娲挎潪浼欑礆 */
+/* 非 focus 时整体变淡 */
 .slot.dim {
   opacity: 0.45;
 }
 
 .visual {
   width: 100%;
-  aspect-ratio: 1 / 1;   /* 閿?瀵搫鍩楀锝嗘煙閿?*/
+  aspect-ratio: 1 / 1;   /* 正方形头像区域 */
   border-radius: 16px;
   background: #e9e9e9;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;      /* 閿?閸ュ墽澧栫搾鍛毉鐟佷礁澹€ */
+  overflow: hidden;      /* 图片裁剪填满 */
   position: relative;
 }
 
@@ -272,19 +272,19 @@ function filteredList(currentIndex: number) {
 }
 
 .label {
-  display: none;   /* 娑撳秴鍟€閺勫墽銇?Add 閺傚洤鐡?*/
+  display: none;   /* 小屏只显示加号，显示 Add 文字 */
 }
 
-/* 闁鑵戦悩璁规嫹?*/
+/* 已选卡片 */
 .picked {
   padding: 0;
 }
 
-/* 閿?閸ュ墽澧栨繅顐ｅ姬閺佺繝閲滈弬鐟版健 */
+/* 图片铺满不变形 */
 .picked-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;   /* 閼奉亪鈧倸绨茬憗浣稿 */
+  object-fit: cover;   /* 封面填充 */
   display: block;
 }
 /* Dropdown */
