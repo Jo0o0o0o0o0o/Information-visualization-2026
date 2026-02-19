@@ -19,7 +19,7 @@ const activeAxes = ref(allAxes.filter((a) => !reducedDefaultKeys.has(a.key)));
 
 const focusIndex = ref<number | null>(null);
 
-// 点击同一�?= 取消
+// 点击同一�?= 取消
 function toggleFocus(i: number) {
   focusIndex.value = focusIndex.value === i ? null : i;
 }
@@ -122,7 +122,9 @@ watchEffect(() => {
   :focusIndex="focusIndex"
   @update-slot="setSlot"
   @toggle-focus="toggleFocus"
-/>    <section class="grid">
+/>
+
+    <section class="grid">
       <div class="col leftCol">
         <div class="panel big">
           <h3>Radar 对比</h3>
@@ -158,7 +160,7 @@ watchEffect(() => {
         </div>
 
         <div class="panel boxPanel">
-          <h3>箱型�?/h3>
+          <h3>箱型</h3>
           <BoxPlotChart
             :allDogs="dogs"
             :selectedDogs="selectedDogs"
@@ -174,13 +176,17 @@ watchEffect(() => {
 
 <style scoped>
 .comparePage { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
-.grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; align-items: start; }`r`n.col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .panel { background: #f4f4f4; border-radius: 12px; padding: 12px; min-height: 220px; }
 .panel h3 { margin: 0 0 12px; }
 .panel.big { min-height: 580px; display: flex; flex-direction: column; }
 .radarChartWrap { height: 480px; min-height: 420px; }
-.panel.narrow { min-height: 0; }`r`n.boxPanel { min-height: 380px; }
+.panel.narrow { min-height: 0; }
+.boxPanel { min-height: 380px; }
 .hint { opacity: 0.7; margin-top: 8px; }
 </style>
+
+
 
 

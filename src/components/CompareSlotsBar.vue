@@ -82,6 +82,7 @@ function filteredList(currentIndex: number) {
       .filter(Boolean)
   );
 
+  // 杩囨护鎺夊凡閫夌殑
   const available = props.dogs.filter(d => !selectedNames.has(d.name));
 
   return fuzzyFilter(available, query.value, (d) => d.name, { limit: 80 });
@@ -100,6 +101,7 @@ function filteredList(currentIndex: number) {
     hasTag: !!slotBreedGroups[i - 1],
   }"
 >
+      <!-- 涓婂崐锟? 锟?宸诧拷?-->
       <button
         v-if="!props.slots[i - 1]"
         class="visual addArea"
@@ -187,10 +189,12 @@ function filteredList(currentIndex: number) {
   min-height: 160px;
   position: relative;
 }
+/* 锟?focus锛氭贰榛勮壊鑳屾櫙 */
 .slot.focused {
   background: #fff6cc;
 }
 
+/* 锟?鍏跺畠鍗＄墖鍙樻贰锛堜綘涔熷彲浠ヨ皟寰楁洿杞伙級 */
 .slot.dim {
   opacity: 0.45;
 }
@@ -222,10 +226,12 @@ function filteredList(currentIndex: number) {
   display: none;   /* 涓嶅啀鏄剧ず Add 鏂囧瓧 */
 }
 
+/* 閫変腑鐘讹拷?*/
 .picked {
   padding: 0;
 }
 
+/* 锟?鍥剧墖濉弧鏁翠釜鏂瑰潡 */
 .picked-img {
   width: 100%;
   height: 100%;

@@ -82,8 +82,8 @@ function addAxis(key: RadarKey) {
 .axisPanel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .sectionTitle {
@@ -97,7 +97,7 @@ function addAxis(key: RadarKey) {
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .chip {
