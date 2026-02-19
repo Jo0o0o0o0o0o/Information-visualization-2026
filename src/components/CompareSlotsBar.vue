@@ -2,6 +2,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import type { DogBreed } from "@/types/dogBreed";
 import { fuzzyFilter } from "@/utils/fuzzySearch";
+import theDogApiBreeds from "@/data/dogs_thedogapi_breeds.json";
+import { findBreedGroupByName, getBreedGroupTagStyle } from "@/utils/fuzzyBreedGroup";
 
 const props = defineProps<{
   dogs: DogBreed[];
@@ -15,10 +17,22 @@ const emit = defineEmits<{
   (e: "toggleFocus", index: number): void;
 }>();
 
-// 哪个卡片的 dropdown 打开
+// 鍝釜鍗＄墖锟?dropdown 鎵撳紑
 const openIndex = ref<number | null>(null);
 const query = ref("");
 const root = ref<HTMLElement | null>(null);
+const apiBreeds = theDogApiBreeds as { name: string; breed_group?: string | null }[];
+
+const slotBreedGroups = computed(() =>
+  props.slots.map((dog) => {
+    if (!dog) return null;
+    return findBreedGroupByName(dog.name, apiBreeds);
+  }),
+);
+
+function breedGroupStyle(group: string | null) {
+  return group ? getBreedGroupTagStyle(group) : undefined;
+}
 
 function focusSearch() {
   nextTick(() => {
@@ -68,7 +82,6 @@ function filteredList(currentIndex: number) {
       .filter(Boolean)
   );
 
-  // 过滤掉已选的
   const available = props.dogs.filter(d => !selectedNames.has(d.name));
 
   return fuzzyFilter(available, query.value, (d) => d.name, { limit: 80 });
@@ -84,15 +97,14 @@ function filteredList(currentIndex: number) {
   :class="{
     focused: props.focusIndex === (i - 1),
     dim: props.focusIndex !== null && props.focusIndex !== undefined && props.focusIndex !== (i - 1),
+    hasTag: !!slotBreedGroups[i - 1],
   }"
 >
-      <!-- 上半：+ 或 已选 -->
       <button
         v-if="!props.slots[i - 1]"
         class="visual addArea"
         @click="openFromPlus(i - 1)"
       >
-        <span class="plus">＋</span>
         <span class="label">Add</span>
       </button>
 
@@ -110,14 +122,23 @@ function filteredList(currentIndex: number) {
   />
 </div>
 
-      <!-- 下半：Select -->
-      <button class="trigger" @click="toggle(i - 1)">
-        <span class="txt">
-          {{ props.slots[i - 1]?.name ?? "choose dogs" }}
-        </span>
-        <span class="caret">{{ openIndex === i - 1 ? "▴" : "▾" }}</span>
-      </button>
+      <!-- 涓嬪崐锛歋elect -->
 
+      <div class="selectRow">
+        <button class="trigger" @click="toggle(i - 1)">
+          <span class="txt">
+            {{ props.slots[i - 1]?.name ?? "choose dogs" }}
+          </span>
+          <span class="caret">{{ openIndex === i - 1 ? "^" : "v" }}</span>
+        </button>
+        <div
+          v-if="slotBreedGroups[i - 1]"
+          class="breedTag"
+          :style="breedGroupStyle(slotBreedGroups[i - 1])"
+        >
+          {{ slotBreedGroups[i - 1] }}
+        </div>
+      </div>
       <!-- dropdown panel -->
       <div v-if="openIndex === i - 1" class="panel"data-open="true">
         <div class="searchRow">
@@ -165,25 +186,21 @@ function filteredList(currentIndex: number) {
   min-height: 160px;
   position: relative;
 }
-/* ✅ focus：淡黄色背景 */
 .slot.focused {
   background: #fff6cc;
 }
 
-/* ✅ 其它卡片变淡（你也可以调得更轻） */
 .slot.dim {
   opacity: 0.45;
 }
 
 .visual {
   width: 100%;
-  aspect-ratio: 1 / 1;   /* ✅ 强制正方形 */
   border-radius: 16px;
   background: #e9e9e9;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;      /* ✅ 图片超出裁剪 */
   position: relative;
 }
 
@@ -199,19 +216,15 @@ function filteredList(currentIndex: number) {
 }
 
 .label {
-  display: none;   /* 不再显示 Add 文字 */
 }
 
-/* 选中状态 */
 .picked {
   padding: 0;
 }
 
-/* ✅ 图片填满整个方块 */
 .picked-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;   /* 自适应裁剪 */
   display: block;
 }
 /* Dropdown */
@@ -226,21 +239,52 @@ function filteredList(currentIndex: number) {
   justify-content: space-between;
   padding: 0 10px;
   cursor: pointer;
+  flex: 1 1 auto;
+  min-width: 0;
 }
-.txt { opacity: 0.9; font-weight: 600; }
+.selectRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.txt {
+  opacity: 0.9;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.breedTag {
+  flex: 0 0 auto;
+  max-width: 108px;
+  height: 30px;
+  border-radius: 999px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .caret { opacity: 0.7; }
 
 .panel {
   position: absolute;
   left: 14px;
   right: 14px;
-  top: calc(14px + 90px + 12px + 38px + 6px); /* 卡片内部定位 */
   background: white;
   border: 1px solid rgba(0,0,0,0.14);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.12);
   overflow: hidden;
   z-index: 20;
+}
+
+.slot.hasTag .panel {
+  right: 126px;
 }
 
 .searchRow {
