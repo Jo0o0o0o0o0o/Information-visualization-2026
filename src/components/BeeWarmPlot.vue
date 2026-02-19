@@ -3,6 +3,8 @@ import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from "vue"
 import type { DogBreed } from "@/types/dogBreed";
 import type { TraitKey } from "@/utils/traitFilter";
 import { createBeeswarmPlot } from "@/d3Viz/createBeewarmPlot";
+import theDogApiBreeds from "@/data/dogs_thedogapi_breeds.json";
+import { findBreedGroupByName, getBreedGroupTagStyle } from "@/utils/fuzzyBreedGroup";
 
 export type BeeswarmNode = d3.SimulationNodeDatum & {
   dogId: string;
@@ -34,6 +36,38 @@ let ro: ResizeObserver | null = null;
 // tooltip
 const hovered = ref<BeeswarmNode | null>(null);
 const tip = ref({ x: 0, y: 0, show: false });
+const selectedBreedGroup = ref<string | null>(null);
+
+const breedGroupTags = computed(() => {
+  const groups = new Set<string>();
+  for (const d of props.dogs) {
+    const group = findBreedGroupByName(
+      d.name,
+      theDogApiBreeds as { name: string; breed_group?: string | null }[],
+    );
+    if (group) groups.add(group);
+  }
+
+  return Array.from(groups)
+    .sort((a, b) => a.localeCompare(b))
+    .map((group) => ({
+      key: group,
+      label: group,
+      style: getBreedGroupTagStyle(group),
+    }));
+});
+
+const filteredDogs = computed(() => {
+  if (!selectedBreedGroup.value) return props.dogs;
+
+  return props.dogs.filter((d) => {
+    const group = findBreedGroupByName(
+      d.name,
+      theDogApiBreeds as { name: string; breed_group?: string | null }[],
+    );
+    return group === selectedBreedGroup.value;
+  });
+});
 
 function setTipFromEvent(ev: PointerEvent) {
   const wrap = wrapRef.value;
@@ -47,7 +81,7 @@ const nodes = computed<BeeswarmNode[]>(() => {
   const traits = [...props.traits];
   const out: BeeswarmNode[] = [];
 
-  for (const d of props.dogs) {
+  for (const d of filteredDogs.value) {
     for (const t of traits) {
       const v = (d as any)[t];
       if (typeof v === "number" && Number.isFinite(v)) {
@@ -62,6 +96,16 @@ const nodes = computed<BeeswarmNode[]>(() => {
   }
   return out;
 });
+
+watch(
+  breedGroupTags,
+  (tags) => {
+    if (selectedBreedGroup.value && !tags.some((t) => t.key === selectedBreedGroup.value)) {
+      selectedBreedGroup.value = null;
+    }
+  },
+  { immediate: true },
+);
 
 function resizeAndDraw() {
   if (!svgRef.value || !chart) return;
@@ -120,6 +164,31 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="wrap" ref="wrapRef">
+    <div class="header">
+      <div class="title">Trait distribution (beeswarm)</div>
+      <div class="groupTags">
+        <button
+          class="groupTag allTag"
+          :class="{ active: !selectedBreedGroup }"
+          type="button"
+          @click="selectedBreedGroup = null"
+        >
+          All
+        </button>
+        <button
+          v-for="tag in breedGroupTags"
+          :key="`beeswarm-group-${tag.key}`"
+          class="groupTag"
+          :style="tag.style"
+          :class="{ active: selectedBreedGroup === tag.key }"
+          type="button"
+          @click="selectedBreedGroup = tag.key"
+        >
+          {{ tag.label }}
+        </button>
+      </div>
+    </div>
+
     <div class="chartArea" ref="chartAreaRef">
       <svg ref="svgRef"></svg>
 
@@ -140,11 +209,54 @@ onBeforeUnmount(() => {
   height: 100%;
   width: 100%;
   min-height: 780px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.groupTags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.groupTag {
+  border: 1px solid transparent;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.allTag {
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+.groupTag.active {
+  border-width: 2px;
+  border-color: #facc15;
+  font-weight: 700;
 }
 
 .chartArea {
   position: relative;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   min-height: 780px;
 }

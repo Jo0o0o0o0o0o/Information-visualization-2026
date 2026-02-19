@@ -479,11 +479,10 @@ onBeforeUnmount(() => {
     </div>
     <section class="beeswarmSection">
       <div class="card beeswarm">
-        <div class="title">Trait distribution (beeswarm)</div>
 
         <div class="plotArea beeswarmArea">
           <BeeswarmPlot
-            :dogs="filteredDogs"
+            :dogs="dogs"
             :traits="beeswarmTraits"
             :traitLabels="traitLabels"
             :highlightId="highlightId"
@@ -734,7 +733,7 @@ onBeforeUnmount(() => {
 }
 
 .listBody::-webkit-scrollbar-thumb:hover {
-  background: rgba(71, 85, 105, 0.85);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .row {
@@ -903,5 +902,11 @@ onBeforeUnmount(() => {
   min-height: 780px;
 }
 </style>
+
+
+
+
+
+
 
 
