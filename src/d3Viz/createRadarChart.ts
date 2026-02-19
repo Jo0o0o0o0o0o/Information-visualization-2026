@@ -8,7 +8,11 @@ export type RadarKey =
   | "protectiveness"
   | "trainability"
   | "energy"
-  | "barking";
+  | "barking"
+  | "shedding"
+  | "grooming"
+  | "drooling"
+  | "coat_length";
 
 export const RADAR_AXES: AxisItem[] = [
   { key: "good_with_children", label: "Children" },
@@ -19,6 +23,10 @@ export const RADAR_AXES: AxisItem[] = [
   { key: "trainability", label: "Train" },
   { key: "energy", label: "Energy" },
   { key: "barking", label: "Barking" },
+  { key: "shedding", label: "Shedding" },
+  { key: "grooming", label: "Grooming" },
+  { key: "drooling", label: "Drooling" },
+  { key: "coat_length", label: "Coat length" },
 ];
 
 export type RadarDog = {

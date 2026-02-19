@@ -5,7 +5,7 @@ import type { DogBreed } from "@/types/dogBreed";
 import CompareSlotsBar from "@/components/CompareSlotsBar.vue";
 import RadarChart from "@/components/RadarChart.vue";
 import dogsJson from "@/data/dogs_ninjas_raw.json";
-import { RADAR_AXES, RADAR_COLORS } from "@/d3Viz/createRadarChart"; 
+import { RADAR_AXES, RADAR_COLORS } from "@/d3Viz/createRadarChart";
 import AxisSelector from "@/components/AxisSelector.vue";
 import DumbbellChart from "@/components/DumbbellChart.vue";
 import BoxPlotChart from "@/components/BoxPlotChart.vue";
@@ -14,7 +14,8 @@ const route = useRoute();
 
 const dogs = ref<DogBreed[]>([]);
 const allAxes = RADAR_AXES;
-const activeAxes = ref([...allAxes]);
+const reducedDefaultKeys = new Set(["shedding", "grooming", "drooling", "coat_length"]);
+const activeAxes = ref(allAxes.filter((a) => !reducedDefaultKeys.has(a.key)));
 
 const focusIndex = ref<number | null>(null);
 
