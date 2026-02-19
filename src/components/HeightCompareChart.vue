@@ -159,7 +159,7 @@ const ticksCm = computed(() => {
   position: relative;
   height: 300px;
   border-radius: 10px;
-  background: #ddd;
+  background: transparent;
   padding: 10px 0px 0px 10px; /* 给左侧尺子留空间 */
   overflow: hidden;
 }

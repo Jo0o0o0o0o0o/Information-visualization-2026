@@ -51,8 +51,8 @@ function resizeAndDraw() {
   chart.update(props.data, {
     width: w,
     height: h,
-    xLabel: "Height",
-    yLabel: "Weight",
+    xLabel: "Height (cm)",
+    yLabel: "Weight (kg)",
     highlightId: props.highlightId ?? null,
   });
 }

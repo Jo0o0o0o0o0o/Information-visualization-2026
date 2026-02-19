@@ -46,8 +46,8 @@ const scatterData = computed<ScatterDatum[]>(() =>
       d.name,
       theDogApiBreeds as { name: string; breed_group?: string | null }[],
     ),
-    x: (d.max_height_male + d.max_height_female) / 2,
-    y: (d.max_weight_male + d.max_weight_female) / 2,
+    x: Math.round(((d.max_height_male + d.max_height_female) / 2) * 2.54),
+    y: Math.round(((d.max_weight_male + d.max_weight_female) / 2) * 0.45359237),
     size: d.max_life_expectancy,
   })),
 );
@@ -903,11 +903,4 @@ onBeforeUnmount(() => {
   min-height: 620px;
 }
 </style>
-
-
-
-
-
-
-
 

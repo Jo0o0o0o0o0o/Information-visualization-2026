@@ -60,6 +60,7 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
       .range([height, 0]);
 
     const [xMin, xMax] = xScale.domain() as [number, number];
+    const yMax = yScale.domain()[1] as number;
 
     const sizeVals = data
       .map((d) => d.size)
@@ -69,13 +70,18 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
 
     const rScale = d3.scaleSqrt().domain([sizeMin, sizeMax]).range([4, 15]).clamp(true);
 
-    const xTicks = d3.range(Math.floor(xMin), Math.ceil(xMax) + 1, 1);
+    const xTickStart = Math.floor(xMin / 10) * 10;
+    const xTickEnd = Math.ceil(xMax / 10) * 10;
+    const yTickEnd = Math.ceil(yMax / 10) * 10;
+
+    const xTicks = d3.range(xTickStart, xTickEnd + 10, 10);
+    const yTicks = d3.range(0, yTickEnd + 10, 10);
 
     gx.attr("transform", `translate(0,${height})`).call(
       d3.axisBottom(xScale).tickValues(xTicks).tickFormat(d3.format(".0f")),
     );
 
-    gy.call(d3.axisLeft(yScale).ticks(6));
+    gy.call(d3.axisLeft(yScale).tickValues(yTicks).tickFormat(d3.format(".0f")));
 
     // X label
     gx.selectAll(".x-label")
@@ -85,7 +91,8 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
       .attr("x", width)
       .attr("y", 40)
       .attr("text-anchor", "end")
-      .text(opt.xLabel ?? "");
+      .attr("fill", "#111827")
+      .text(opt.xLabel ?? "Height (cm)");
 
     // Y label
     gy.selectAll(".y-label")
@@ -95,7 +102,8 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
       .attr("x", -10)
       .attr("y", -10)
       .attr("text-anchor", "start")
-      .text(opt.yLabel ?? "");
+      .attr("fill", "#111827")
+      .text(opt.yLabel ?? "Weight (kg)");
 
     const circles = pointsLayer
       .selectAll<SVGCircleElement, ScatterDatum>("circle")
@@ -145,4 +153,3 @@ export function createScatterPlot(svgEl: SVGSVGElement, handlers: ScatterHandler
 
   return { update, destroy };
 }
-
