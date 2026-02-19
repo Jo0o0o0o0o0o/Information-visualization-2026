@@ -563,7 +563,7 @@ onBeforeUnmount(() => {
 }
 
 .card {
-  background: #eee;
+  background: #eeedeb;
   border-radius: 10px;
   padding: 12px;
 }
@@ -580,6 +580,9 @@ onBeforeUnmount(() => {
 .card.right {
   display: grid;
   flex-direction: column;
+}
+.card.scatter {
+  background: #f6f6f600;
 }
 
 .midBody {
@@ -727,6 +730,31 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
+.compareBtn {
+  margin-top: 12px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #facc15;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.compareBtn:hover:not(:disabled) {
+  background: #eab308;
+}
+
+.compareBtn:disabled {
+  background: #fde68a;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
 .traitArea {
   height: 260px;
   width: 100%;
@@ -740,6 +768,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #fff3ae;
 }
 
 .listHeader {
@@ -950,6 +979,5 @@ onBeforeUnmount(() => {
   min-height: 780px;
 }
 </style>
-
 
 

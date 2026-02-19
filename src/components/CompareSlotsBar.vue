@@ -5,6 +5,7 @@ import type { DogBreed } from "@/types/dogBreed";
 import { fuzzyFilter } from "@/utils/fuzzySearch";
 import theDogApiBreeds from "@/data/dogs_thedogapi_breeds.json";
 import { findBreedGroupByName, getBreedGroupTagStyle } from "@/utils/fuzzyBreedGroup";
+import { RADAR_COLORS } from "@/d3Viz/createRadarChart";
 
 const props = defineProps<{
   dogs: DogBreed[];
@@ -31,6 +32,34 @@ const slotBreedGroups = computed(() =>
     return findBreedGroupByName(dog.name, apiBreeds);
   }),
 );
+
+const slotRadarColors = computed(() => {
+  let colorIdx = 0;
+  return props.slots.map((dog) => {
+    if (!dog) return null;
+    const color = RADAR_COLORS[colorIdx % RADAR_COLORS.length] ?? "#f59e0b";
+    colorIdx += 1;
+    return color;
+  });
+});
+
+function toSoftBackground(color: string, alpha = 0.24) {
+  if (/^#([\da-f]{3}|[\da-f]{6})$/i.test(color)) {
+    const hex = color.slice(1);
+    const full =
+      hex.length === 3
+        ? hex
+            .split("")
+            .map((c) => c + c)
+            .join("")
+        : hex;
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  return color;
+}
 
 function breedGroupStyle(group: string | null) {
   return group ? getBreedGroupTagStyle(group) : undefined;
@@ -106,6 +135,11 @@ function filteredList(currentIndex: number) {
   v-for="i in props.max"
   :key="i"
   class="slot"
+  :style="
+    props.focusIndex === (i - 1) && slotRadarColors[i - 1]
+      ? { backgroundColor: toSoftBackground(slotRadarColors[i - 1]!) }
+      : undefined
+  "
   :class="{
     focused: props.focusIndex === (i - 1),
     dim: props.focusIndex !== null && props.focusIndex !== undefined && props.focusIndex !== (i - 1),
