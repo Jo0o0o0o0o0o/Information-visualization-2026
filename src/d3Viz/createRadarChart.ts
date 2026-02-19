@@ -47,6 +47,21 @@ export type RadarOptions = {
   focusIndex?: number | null;
 };
 
+export type RadarHoverDatum = {
+  dogIndex: number;
+  dogName: string;
+  axisKey: RadarKey;
+  axisLabel: string;
+  value: number;
+};
+
+export type RadarHandlers = {
+  onHover?: (d: RadarHoverDatum, ev: PointerEvent) => void;
+  onMove?: (d: RadarHoverDatum, ev: PointerEvent) => void;
+  onLeave?: (ev: PointerEvent) => void;
+  onClick?: (dogIndex: number, ev: PointerEvent) => void;
+};
+
 // 黄色主题色板：主色黄色 + 暖色系搭配
 const YELLOW_THEME = {
   primary: "#E6A800",
@@ -73,7 +88,7 @@ export const RADAR_COLORS: string[] = [
 ];
 
 
-export function createRadarChart(svgEl: SVGSVGElement) {
+export function createRadarChart(svgEl: SVGSVGElement, handlers: RadarHandlers = {}) {
   const svg = d3.select(svgEl);
 
   const root = svg.append("g");
@@ -238,13 +253,29 @@ export function createRadarChart(svgEl: SVGSVGElement) {
       .attr("fill", (d) => colorAt(d.dogIndex))
       .attr("fill-opacity", 0.22)
       .attr("stroke", (d) => colorAt(d.dogIndex))
-      .attr("stroke-width", 2.2);
+      .attr("stroke-width", 2.2)
+      .style("cursor", "pointer")
+      .on("click", (event, d) => {
+        handlers.onClick?.(d.dogIndex, event as PointerEvent);
+      });
 
     // 点（可选，但有助于“分级明确”）
     groups
       .selectAll("circle.pt")
       .data((dog, dogIndex) =>
-       pointsOf(dog).map((p, i) => ({ p, i, dogIndex }))
+       AXES.map((axis, i) => {
+         const value = clamp((dog as any)[axis.key], minV, maxV);
+         const rr = scaleR(value);
+         return {
+           p: [Math.cos(angle(i)) * rr, Math.sin(angle(i)) * rr] as [number, number],
+           i,
+           dogIndex,
+           dogName: dog.name,
+           axisKey: axis.key,
+           axisLabel: axis.label,
+           value,
+         };
+       })
        )
       .join("circle")
       .attr("class", "pt")
@@ -254,7 +285,38 @@ export function createRadarChart(svgEl: SVGSVGElement) {
       .attr("fill", (d) => colorAt(d.dogIndex))
       .attr("stroke", "#fff")
       .attr("stroke-width", 0.8)
-      .attr("opacity", 0.95);
+      .attr("opacity", 0.95)
+      .style("cursor", "pointer")
+      .on("pointerenter", (event, d) => {
+        handlers.onHover?.(
+          {
+            dogIndex: d.dogIndex,
+            dogName: d.dogName,
+            axisKey: d.axisKey,
+            axisLabel: d.axisLabel,
+            value: d.value,
+          },
+          event as PointerEvent,
+        );
+      })
+      .on("pointermove", (event, d) => {
+        handlers.onMove?.(
+          {
+            dogIndex: d.dogIndex,
+            dogName: d.dogName,
+            axisKey: d.axisKey,
+            axisLabel: d.axisLabel,
+            value: d.value,
+          },
+          event as PointerEvent,
+        );
+      })
+      .on("pointerleave", (event) => {
+        handlers.onLeave?.(event as PointerEvent);
+      })
+      .on("click", (event, d) => {
+        handlers.onClick?.(d.dogIndex, event as PointerEvent);
+      });
 
     const focus = opt.focusIndex ?? null;
 const hasFocus = focus !== null && focus >= 0 && focus < dogs.length;
@@ -269,7 +331,7 @@ if (!hasFocus) {
     .attr("fill-opacity", 0.22)
     .attr("stroke-opacity", 1);
 
-  groups.selectAll<SVGCircleElement, { p: [number, number]; i: number; dogIndex: number }>("circle.pt")
+  groups.selectAll<SVGCircleElement, any>("circle.pt")
     .attr("opacity", 0.95);
 } else {
   // 让“非 focus”的组整体变淡（但不要淡到看不见）
@@ -281,7 +343,7 @@ if (!hasFocus) {
     .attr("stroke-opacity", (d) => (d.dogIndex === focus ? 1 : 0.6));
 
   // ✅ 重点：circle.pt 的 datum 里也要带 dogIndex（你前面 data 已经这么做了）
-  groups.selectAll<SVGCircleElement, { p: [number, number]; i: number; dogIndex: number }>("circle.pt")
+  groups.selectAll<SVGCircleElement, any>("circle.pt")
     .attr("opacity", (d) => (d.dogIndex === focus ? 0.95 : 0.35));
 
   // 置顶：这一步用 groups 的 index 才是对的

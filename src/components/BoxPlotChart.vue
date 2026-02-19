@@ -22,7 +22,7 @@ function redraw() {
   if (!el) return;
   const rect = el.getBoundingClientRect();
   const w = Math.max(320, Math.floor(rect.width));
-  const h = Math.max(260, Math.floor(rect.height));
+  const h = Math.max(340, Math.floor(rect.height));
 
   drawBoxPlotChart(el, props.allDogs, props.selectedDogs, {
     width: w,
@@ -60,6 +60,6 @@ watch(
 .boxRoot {
   position: relative;
   width: 100%;
-  height: 380px;
+  height: clamp(520px, 62vh, 900px);
 }
 </style>

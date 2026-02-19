@@ -266,16 +266,26 @@ console.log(
 );
 console.groupEnd();
 
-    // y scale (fit this metric's distribution range)
+    // y scale (cover whiskers, outliers, and selected markers)
     const span = stats.whiskerHigh - stats.whiskerLow;
     const pad = Math.max(
   span * 0.10,
   metric.key === "life" ? 0.5 : metric.key === "weight" ? 1 : 2
 );
 
+const markerValues = selectedDogs
+  .map((dog) => {
+    const r = getRangeByKey(dog, metric.key);
+    return r ? midValue(r) : null;
+  })
+  .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+
+const yMinRaw = d3.min([stats.min, stats.whiskerLow, ...stats.outliers, ...markerValues]) ?? stats.min;
+const yMaxRaw = d3.max([stats.max, stats.whiskerHigh, ...stats.outliers, ...markerValues]) ?? stats.max;
+
 const y = d3
   .scaleLinear()
-  .domain([stats.whiskerLow - pad, stats.whiskerHigh + pad])
+  .domain([yMinRaw - pad, yMaxRaw + pad])
   .range([plotH, 0])
   .nice();
 

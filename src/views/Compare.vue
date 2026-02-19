@@ -151,7 +151,7 @@ watchEffect(() => {
 
       <div class="col rightCol">
         <div class="panel narrow">
-          <h3>添加/减少维度</h3>
+          
           <AxisSelector
             :allAxes="allAxes"
             :activeAxes="activeAxes"

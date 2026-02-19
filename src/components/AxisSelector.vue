@@ -82,8 +82,10 @@ function addAxis(key: RadarKey) {
 .axisPanel {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 8px;
   margin-top: 4px;
+  min-height: 360px;
 }
 
 .sectionTitle {

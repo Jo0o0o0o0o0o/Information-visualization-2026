@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from "vue";
 import { createRadarChart } from "@/d3Viz/createRadarChart";
-import type { RadarDog, RadarKey } from "@/d3Viz/createRadarChart";
+import type { RadarDog, RadarKey, RadarHoverDatum } from "@/d3Viz/createRadarChart";
 import { RADAR_COLORS } from "@/d3Viz/createRadarChart";
 
 const props = defineProps<{
-  dogs: RadarDog[]; // 选中的狗数组（0~5）
+  dogs: RadarDog[];
   axes: { key: RadarKey; label: string }[];
   focusIndex?: number | null;
 }>();
@@ -15,6 +15,8 @@ const emit = defineEmits<{
 
 const svgRef = ref<SVGSVGElement | null>(null);
 const chartAreaRef = ref<HTMLDivElement | null>(null);
+const hovered = ref<RadarHoverDatum | null>(null);
+const tip = ref({ x: 0, y: 0, show: false });
 
 let chart: ReturnType<typeof createRadarChart> | null = null;
 let ro: ResizeObserver | null = null;
@@ -25,9 +27,12 @@ function legendColor(idx: number) {
   return RADAR_COLORS[idx % RADAR_COLORS.length];
 }
 
-function onLegendClick(idx: number) {
-  console.log("[RadarChart] legend click idx =", idx, "current focus =", props.focusIndex);
-  emit("toggleFocus", idx);
+function setTipFromEvent(ev: PointerEvent) {
+  const chartArea = chartAreaRef.value;
+  if (!chartArea) return;
+  const r = chartArea.getBoundingClientRect();
+  tip.value.x = ev.clientX - r.left + 8;
+  tip.value.y = ev.clientY - r.top + 8;
 }
 
 function resizeAndDraw() {
@@ -63,7 +68,24 @@ function resizeAndDraw() {
 }
 
 onMounted(() => {
-  chart = createRadarChart(svgRef.value!);
+  chart = createRadarChart(svgRef.value!, {
+    onHover: (d, ev) => {
+      hovered.value = d;
+      tip.value.show = true;
+      setTipFromEvent(ev);
+    },
+    onMove: (d, ev) => {
+      hovered.value = d;
+      setTipFromEvent(ev);
+    },
+    onLeave: () => {
+      tip.value.show = false;
+      hovered.value = null;
+    },
+    onClick: (dogIndex) => {
+      emit("toggleFocus", dogIndex);
+    },
+  });
   resizeAndDraw();
 
   ro = new ResizeObserver(() => requestAnimationFrame(resizeAndDraw));
@@ -86,6 +108,8 @@ onBeforeUnmount(() => {
   ro?.disconnect();
   ro = null;
   chart?.destroy();
+  tip.value.show = false;
+  hovered.value = null;
 });
 </script>
 
@@ -93,6 +117,14 @@ onBeforeUnmount(() => {
   <div class="wrap">
     <div class="chartArea" ref="chartAreaRef">
       <svg ref="svgRef"></svg>
+      <div
+        v-if="tip.show && hovered"
+        class="tooltip"
+        :style="{ left: tip.x + 'px', top: tip.y + 'px' }"
+      >
+        <div class="tTitle">{{ hovered.dogName }}</div>
+        <div class="tRow">{{ hovered.axisLabel }}: {{ hovered.value }}</div>
+      </div>
       <div class="legend" v-if="dogs.length">
         <button
           v-for="(d, idx) in dogs"
@@ -133,6 +165,25 @@ svg {
   width: 100%;
   height: 100%;
   display: block;
+}
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.95);
+  color: #111827;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.25;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+  z-index: 30;
+}
+.tTitle {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.tRow {
+  opacity: 0.92;
 }
 .legend {
   position: absolute;
@@ -193,3 +244,4 @@ svg {
   white-space: nowrap;
 }
 </style>
+
