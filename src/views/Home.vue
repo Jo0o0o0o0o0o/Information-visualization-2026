@@ -120,7 +120,6 @@ const selectedWorldBreedGroup = ref<string | null>(null);
 
 const worldBreedGroupTags = computed(() => {
   const groups = new Set<string>();
-  let hasUnknown = false;
 
   for (const d of dogs.value) {
     const group = findBreedGroupByName(
@@ -133,15 +132,11 @@ const worldBreedGroupTags = computed(() => {
       continue;
     }
 
-    hasUnknown = true;
   }
 
   const sortedGroups = Array.from(groups).sort((a, b) => a.localeCompare(b));
   const tags = sortedGroups.map((g) => ({ key: g, label: g, style: getBreedGroupTagStyle(g) }));
 
-  if (hasUnknown) {
-    tags.push({ key: UNKNOWN_BREED_GROUP_KEY, label: "Unknown", style: getBreedGroupTagStyle("Mixed") });
-  }
 
   return tags;
 });
@@ -164,6 +159,13 @@ const worldDisplayPoints = computed<WorldPoint[]>(() => {
     return group === selectedGroup;
   });
 });
+const worldPointColor = computed(() => {
+  const key = selectedWorldBreedGroup.value;
+  if (!key) return "#f97316";
+  const tag = worldBreedGroupTags.value.find((t) => t.key === key);
+  return (tag?.style?.backgroundColor as string | undefined) ?? "#f97316";
+});
+
 const selectedCountryCode = ref<string | null>(null);
 const countryDogList = computed(() => {
   const cc = selectedCountryCode.value;
@@ -358,6 +360,7 @@ onBeforeUnmount(() => {
           <ScatterPlot
             :data="scatterData"
             :highlightId="highlightId"
+
             :filterEnabled="filterEnabled"
             :breedGroupFilterEnabled="breedGroupFilterEnabled"
             :traitEnabled="traitEnabled"
@@ -441,6 +444,7 @@ onBeforeUnmount(() => {
           <WorldPlot
             :points="worldDisplayPoints"
             :highlightId="highlightId"
+            :pointColor="worldPointColor"
             @selectDog="onSelectDog"
             @selectCountry="onSelectCountry"
           />
@@ -565,7 +569,7 @@ onBeforeUnmount(() => {
   left: 0;
   right: 0;
   background: #efefef;
-  border: 1px solid rgba(0, 0, 0, 0.14);
+  border: 1px solid transparent;
   border-radius: 12px;
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
   z-index: 30;
@@ -802,7 +806,7 @@ onBeforeUnmount(() => {
 }
 
 .groupTag {
-  
+  border: 1px solid transparent;
   background: #ffffff;
   border-radius: 999px;
   padding: 4px 10px;
@@ -816,8 +820,9 @@ onBeforeUnmount(() => {
 }
 
 .groupTag.active {
-  border-color: rgba(245, 158, 11, 0.95);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8);
+  border-color: #facc15;
+  font-weight: 700;
+  border: 2px solid;
 }
 
 .countryBody {
@@ -873,6 +878,8 @@ onBeforeUnmount(() => {
   min-height: 620px;
 }
 </style>
+
+
 
 
 

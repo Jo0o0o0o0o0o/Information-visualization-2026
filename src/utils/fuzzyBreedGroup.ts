@@ -5,12 +5,12 @@ export type DogApiBreed = {
 
 const BREED_GROUP_BG: Record<string, string> = {
   Working: "#ef4444",
-  Herding: "#3b82f6",
-  Hound: "#f59e0b",
-  Sporting: "#10b981",
-  Terrier: "#f97316",
+  Herding: "#236ee5",
+  Hound: "#ff7df6",
+  Sporting: "#00c029",
+  Terrier: "#43bdff",
   Toy: "#8b5cf6",
-  "Non-Sporting": "#14b8a6",
+  "Non-Sporting": "#14b8b8",
   Mixed: "#64748b",
 };
 

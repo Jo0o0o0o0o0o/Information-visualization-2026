@@ -5,6 +5,7 @@ import { createWorldPlot, type WorldPoint, type WorldPlotApi } from "@/d3Viz/cre
 const props = defineProps<{
   points: WorldPoint[];
   highlightId?: string | null;
+  pointColor?: string;
 }>();
 
 const emit = defineEmits<{
@@ -44,6 +45,7 @@ onMounted(() => {
     worldGeoJsonUrl: "/world.geojson",
 
     highlightId: props.highlightId ?? null,
+    pointColor: props.pointColor ?? "#f97316",
 
     onHover: (d, ev) => {
       tip.value.show = true;
@@ -86,6 +88,11 @@ watch(
 watch(
   () => props.highlightId,
   (id) => plot?.setHighlight(id ?? null),
+);
+
+watch(
+  () => props.pointColor,
+  (color) => plot?.setPointColor(color ?? "#f97316"),
 );
 </script>
 

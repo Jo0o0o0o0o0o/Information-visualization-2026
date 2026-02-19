@@ -26,6 +26,7 @@ export type CreateWorldPlotOptions = {
   width: number;
   height: number;
   worldGeoJsonUrl?: string;
+  pointColor?: string;
   onHover?: (d: WorldPoint, ev: MouseEvent) => void;
   onMove?: (d: WorldPoint, ev: MouseEvent) => void;
   onLeave?: () => void;
@@ -36,6 +37,7 @@ export type CreateWorldPlotOptions = {
 export type WorldPlotApi = {
   update: (points: WorldPoint[]) => void;
   setHighlight: (id: string | null) => void;
+  setPointColor: (color: string) => void;
   resize: (w: number, h: number) => void;
   destroy: () => void;
 };
@@ -66,6 +68,7 @@ export function createWorldPlot(
   let points: WorldPoint[] = [];
   let aggregatedPoints: AggregatedWorldPoint[] = [];
   let highlightId: string | null = opt.highlightId ?? null;
+  let pointColor = opt.pointColor ?? "#f97316";
 
   const zoom = d3
     .zoom<SVGSVGElement, unknown>()
@@ -87,7 +90,8 @@ export function createWorldPlot(
       .attr("r", (d) =>
         highlightId && d.dogIds.includes(highlightId) ? getBaseRadius(d) + 1.8 : getBaseRadius(d),
       )
-      .attr("opacity", (d) => (highlightId && !d.dogIds.includes(highlightId) ? 0.25 : 0.88));
+      .attr("fill", (d) => (highlightId && d.dogIds.includes(highlightId) ? "#facc15" : pointColor))
+      .attr("opacity", (d) => (highlightId && d.dogIds.includes(highlightId) ? 1 : 0.55));
   }
 
   function aggregateByCountry(rawPoints: WorldPoint[]): AggregatedWorldPoint[] {
@@ -146,9 +150,8 @@ export function createWorldPlot(
           enter
             .append("circle")
             .attr("r", 3.2)
-            .attr("opacity", 0.88)
-            .attr("stroke", "#111827")
-            .attr("stroke-width", 0.5),
+            .attr("fill", pointColor)
+            .attr("opacity", 0.55),
         (update) => update,
         (exit) => exit.remove(),
       )
@@ -195,6 +198,12 @@ export function createWorldPlot(
     applyHighlight(sel);
   }
 
+  function setPointColor(color: string) {
+    pointColor = color || "#f97316";
+    const sel = gPts.selectAll<SVGCircleElement, AggregatedWorldPoint>("circle");
+    applyHighlight(sel);
+  }
+
   function resize(w: number, h: number) {
     width = Math.max(10, w);
     height = Math.max(10, h);
@@ -207,5 +216,5 @@ export function createWorldPlot(
     svg.remove();
   }
 
-  return { update, setHighlight, resize, destroy };
+  return { update, setHighlight, setPointColor, resize, destroy };
 }
