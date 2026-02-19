@@ -1,10 +1,10 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed } from "vue";
 import dogHeightImg from "@/Image/dogHeight.png";
 import manHeightImg from "@/Image/ManHeight.png";
 import womanHeightImg from "@/Image/WomanHeight.png";
 
-// 组件只需要这些字段；不强依赖你项目里的类型文件
+// 缁勪欢鍙渶瑕佽繖浜涘瓧娈碉紱涓嶅己渚濊禆浣犻」鐩噷鐨勭被鍨嬫枃浠?
 type DogLike = {
   name: string;
   max_height_male: number;
@@ -16,8 +16,8 @@ const props = withDefaults(
     dog: DogLike | null;
     manHeightCm?: number;
     womanHeightCm?: number;
-    maxCm?: number;        // 尺子上限
-    visualHeightPx?: number; // 图表可视高度
+    maxCm?: number;        // 灏哄瓙涓婇檺
+    visualHeightPx?: number; // 鍥捐〃鍙楂樺害
   }>(),
   {
     manHeightCm: 180,
@@ -37,7 +37,7 @@ function parseNumber(x: unknown): number {
     const nums = x.match(/\d+(\.\d+)?/g);
     if (!nums) return 0;
     const arr = nums.map(Number).filter(Number.isFinite);
-    return arr.length ? Math.max(...arr) : 0; // 支持 "25-27" 取最大
+    return arr.length ? Math.max(...arr) : 0; // 鏀寔 "25-27" 鍙栨渶澶?
   }
   return 0;
 }
@@ -69,7 +69,7 @@ const womanLabel = computed(() => Math.round(props.womanHeightCm));
 
   
 const ticksCm = computed(() => {
-  const step = 20;   // 每 20 cm 一个刻度（可改 10 / 25）
+  const step = 20;   // 姣?20 cm 涓€涓埢搴︼紙鍙敼 10 / 25锛?
   const out: number[] = [];
   for (let v = 0; v <= props.maxCm; v += step) out.push(v);
   return out;
@@ -91,7 +91,7 @@ const ticksCm = computed(() => {
         </div>
       </div>
 
-      <!-- 图形区 -->
+      <!-- 鍥惧舰鍖?-->
       <div class="figures">
         <div class="col dog">
             <div class="meta">
@@ -102,9 +102,7 @@ const ticksCm = computed(() => {
               :src="dogHeightImg"
               alt="dog height"
               class="figureImg"
-              :style="{ height: safePxFromCm(dogMaxCm) + 'px'
-                
-               }"
+              :style="{ height: safePxFromCm(dogMaxCm * 1.5) + 'px', maxWidth: 'none' }"
             />
         </div>
           </div>
@@ -150,6 +148,7 @@ const ticksCm = computed(() => {
   position: relative;
   width: 100%;
   height: 260px;
+  margin-top: 18px;
   left: 0;
   right: 0;
   top: 0;
@@ -160,11 +159,11 @@ const ticksCm = computed(() => {
   height: 300px;
   border-radius: 10px;
   background: transparent;
-  padding: 10px 0px 0px 10px; /* 给左侧尺子留空间 */
+  padding: 10px 0px 0px 10px; /* 缁欏乏渚у昂瀛愮暀绌洪棿 */
   overflow: hidden;
 }
 
-/* 尺子 */
+/* 灏哄瓙 */
 .ruler {
   position: absolute;
   left: 0;
@@ -192,29 +191,50 @@ const ticksCm = computed(() => {
   border-radius: 6px;
 }
 
-/* 三列人物/狗 */
+/* 涓夊垪浜虹墿/鐙?*/
 .figures {
   position: absolute;
-  left: 64px;   /* [CHANGED] 给尺子留空间 */
+  left: 64px;   /* [CHANGED] 缁欏昂瀛愮暀绌洪棿 */
   right: 0;
-  bottom: 0;    /* [CHANGED] 贴底，图片底线=0刻度 */
+  bottom: 0;    /* [CHANGED] 璐村簳锛屽浘鐗囧簳绾?0鍒诲害 */
   top: 0;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
-  align-items: end;
+  align-items: stretch;
 }
 
 .col {
+  position: relative;
   display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  height: auto;
+  width: 100%;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
 }
 
+.col.dog .imgWrap {
+  position: static;
+}
+
 .imgWrap {
-    
-  height: 100%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
   display: flex;
   align-items: flex-end;
@@ -228,11 +248,19 @@ const ticksCm = computed(() => {
   display: block;
 }
 
+.col.human .figureImg {
+  transform: translateY(-12px);
+}
+
 .label {
   margin-top: 6px;
   font-weight: 700;
   font-size: 12px;
   text-align: center;
+}
+
+.col.human .label {
+  transform: translateY(-8px);
 }
 
 .value {
@@ -253,7 +281,7 @@ const ticksCm = computed(() => {
 
 .col.human{
   position: relative;
-  padding-top: 18px; /* 给上方高度文字留一点点空间 */
+  padding-top: 18px; /* 缁欎笂鏂归珮搴︽枃瀛楃暀涓€鐐圭偣绌洪棿 */
 }
 
 .topValue{
@@ -267,3 +295,7 @@ const ticksCm = computed(() => {
   white-space: nowrap;
 }
 </style>
+
+
+
+

@@ -66,12 +66,16 @@ onUnmounted(() => {
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 24px;
   border-bottom: 1px solid #fff159;
-  background-color: #ffd900; /* 主体黄色 */
+  background-color: #ffd900;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
 .logo {
@@ -151,7 +155,6 @@ onUnmounted(() => {
 }
 
 .main {
-  /* 页面内容仅通过 padding 控制留白 */
   padding: 16px 24px 24px;
 }
 </style>

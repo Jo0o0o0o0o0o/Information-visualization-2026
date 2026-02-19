@@ -8,6 +8,7 @@ export type BeeswarmOptions = {
   traits: TraitKey[];
   traitLabels: Record<string, string>;
   highlightId?: string | null;
+  pointColor?: string;
 };
 
 export type BeeswarmHandlers = {
@@ -36,9 +37,10 @@ export function createBeeswarmPlot(svgEl: SVGSVGElement, handlers: BeeswarmHandl
   ) {
     const hasHL = !!lastOpt?.highlightId;
     const isHL = !!(lastOpt?.highlightId && n.dogId === lastOpt.highlightId);
+    const baseColor = lastOpt?.pointColor ?? "orange";
 
     sel
-      .attr("fill", isHL ? "orange" : "#4682B4")
+      .attr("fill", isHL ? "#ef4444" : baseColor)
       .attr("opacity", hasHL ? (isHL ? 1 : 0.25) : 0.7);
   }
 

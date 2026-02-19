@@ -37,24 +37,40 @@ let ro: ResizeObserver | null = null;
 const hovered = ref<BeeswarmNode | null>(null);
 const tip = ref({ x: 0, y: 0, show: false });
 const selectedBreedGroup = ref<string | null>(null);
+const UNKNOWN_BREED_GROUP_KEY = "__UNKNOWN_BREED_GROUP__";
 
 const breedGroupTags = computed(() => {
   const groups = new Set<string>();
+  let hasUnknown = false;
   for (const d of props.dogs) {
     const group = findBreedGroupByName(
       d.name,
       theDogApiBreeds as { name: string; breed_group?: string | null }[],
     );
-    if (group) groups.add(group);
+    if (group) {
+      groups.add(group);
+    } else {
+      hasUnknown = true;
+    }
   }
 
-  return Array.from(groups)
+  const knownTags = Array.from(groups)
     .sort((a, b) => a.localeCompare(b))
     .map((group) => ({
       key: group,
       label: group,
       style: getBreedGroupTagStyle(group),
     }));
+
+  if (hasUnknown) {
+    knownTags.push({
+      key: UNKNOWN_BREED_GROUP_KEY,
+      label: "unknow",
+      style: getBreedGroupTagStyle("unknow"),
+    });
+  }
+
+  return knownTags;
 });
 
 const filteredDogs = computed(() => {
@@ -65,8 +81,15 @@ const filteredDogs = computed(() => {
       d.name,
       theDogApiBreeds as { name: string; breed_group?: string | null }[],
     );
+    if (selectedBreedGroup.value === UNKNOWN_BREED_GROUP_KEY) return !group;
     return group === selectedBreedGroup.value;
   });
+});
+
+const pointColor = computed(() => {
+  if (!selectedBreedGroup.value) return "#f97316";
+  const tag = breedGroupTags.value.find((t) => t.key === selectedBreedGroup.value);
+  return (tag?.style?.backgroundColor as string | undefined) ?? "#f97316";
 });
 
 function setTipFromEvent(ev: PointerEvent) {
@@ -119,6 +142,7 @@ function resizeAndDraw() {
     traits: [...props.traits],
     traitLabels: props.traitLabels,
     highlightId: props.highlightId ?? null,
+    pointColor: pointColor.value,
   });
 }
 
@@ -146,7 +170,7 @@ onMounted(() => {
 });
 
 watch(
-  () => [props.dogs, props.traits, props.highlightId],
+  () => [props.dogs, props.traits, props.highlightId, selectedBreedGroup.value],
   async () => {
     await nextTick();
     requestAnimationFrame(resizeAndDraw);
