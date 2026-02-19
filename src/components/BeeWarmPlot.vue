@@ -20,6 +20,7 @@ const props = defineProps<{
   traits: readonly TraitKey[]; // ✅ 接受 readonly，避免类型坑
   traitLabels: Record<string, string>;
   highlightId?: string | null;
+  selectedBreedGroup?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -126,6 +127,14 @@ watch(
     if (selectedBreedGroup.value && !tags.some((t) => t.key === selectedBreedGroup.value)) {
       selectedBreedGroup.value = null;
     }
+  },
+  { immediate: true },
+);
+
+watch(
+  () => props.selectedBreedGroup,
+  (next) => {
+    selectedBreedGroup.value = next ?? null;
   },
   { immediate: true },
 );

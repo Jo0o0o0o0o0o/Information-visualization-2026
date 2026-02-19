@@ -1,5 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import type { DogBreed } from "@/types/dogBreed";
 import { fuzzyFilter } from "@/utils/fuzzySearch";
 import theDogApiBreeds from "@/data/dogs_thedogapi_breeds.json";
@@ -16,6 +17,7 @@ const emit = defineEmits<{
   (e: "updateSlot", index: number, dog: DogBreed | null): void;
   (e: "toggleFocus", index: number): void;
 }>();
+const router = useRouter();
 
 // 閸濐亙閲滈崡锛勫閿?dropdown 閹垫挸绱?
 const openIndex = ref<number | null>(null);
@@ -32,6 +34,15 @@ const slotBreedGroups = computed(() =>
 
 function breedGroupStyle(group: string | null) {
   return group ? getBreedGroupTagStyle(group) : undefined;
+}
+
+function jumpToHomeBeeswarm(group: string | null, dogName: string | null) {
+  if (!group) return;
+  router.push({
+    path: "/home",
+    query: { beeswarmBreedGroup: group, homeSelectedDog: dogName ?? undefined },
+    hash: "#beeswarm-section",
+  });
 }
 
 function focusSearch() {
@@ -135,13 +146,15 @@ function filteredList(currentIndex: number) {
             </span>
             <span class="caret">{{ openIndex === i - 1 ? "^" : "v" }}</span>
           </button>
-          <div
+          <button
             v-if="slotBreedGroups[i - 1]"
             class="breedTag"
-            :style="breedGroupStyle(slotBreedGroups[i - 1])"
+            :style="breedGroupStyle(slotBreedGroups[i - 1] ?? null)"
+            type="button"
+            @click.stop="jumpToHomeBeeswarm(slotBreedGroups[i - 1] ?? null, props.slots[i - 1]?.name ?? null)"
           >
             {{ slotBreedGroups[i - 1] }}
-          </div>
+          </button>
         </div>
         <!-- dropdown panel -->
         <div v-if="openIndex === i - 1" class="panel" data-open="true">
@@ -274,13 +287,16 @@ function filteredList(currentIndex: number) {
   flex: 0 0 auto;
   max-width: 108px;
   height: 30px;
+  border: none;
   border-radius: 999px;
   padding: 0 10px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
+  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

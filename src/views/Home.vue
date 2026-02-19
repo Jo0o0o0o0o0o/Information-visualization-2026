@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, reactive, watch } from "vue";
+import { useRoute } from "vue-router";
 import ScatterPlot from "@/components/ScatterPlot.vue";
 import dogsJson from "@/data/dogs_ninjas_raw.json";
 import type { DogBreed } from "@/types/dogBreed";
@@ -28,11 +29,14 @@ import {
 
 
 const dogs = ref<DogBreed[]>([]);
+const route = useRoute();
 const selectedName = ref<string>("");
 const dogSearchQuery = ref("");
 const dogSelectOpen = ref(false);
 const dogSelectRoot = ref<HTMLElement | null>(null);
 const dogSearchInput = ref<HTMLInputElement | null>(null);
+const beeswarmSectionRef = ref<HTMLElement | null>(null);
+const selectedBeeswarmBreedGroup = ref<string | null>(null);
 
 const avgTraits = ref(computeAverageTraits([] as DogBreed[]));
 
@@ -231,8 +235,13 @@ function onDocClick(e: MouseEvent) {
   }
 }
 
+function readSingleQueryValue(value: unknown): string | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return typeof raw === "string" && raw.trim().length > 0 ? raw : null;
+}
+
 const listDogs = computed(() => {
-  const list = filteredDogs.value.slice(); // 当前筛选结�?= scatterplot 的数据源
+  const list = filteredDogs.value.slice(); // 当前筛选结�?= scatterplot 的数据源
   const sel = selectedDog.value;
   if (!sel) return list;
   const withoutSel = list.filter((d) => d.name !== sel.name);
@@ -258,7 +267,7 @@ function sendToCompare() {
   const name = dog.name;
 
   try {
-    // fallback：如果路�?query 丢了，Compare 页面还能�?localStorage 接到
+    // fallback：如果路�?query 丢了，Compare 页面还能�?localStorage 接到
     const queueKey = "compare_add_queue";
     const rawQueue = localStorage.getItem(queueKey);
     const queue = rawQueue ? (JSON.parse(rawQueue) as unknown) : [];
@@ -275,7 +284,7 @@ function sendToCompare() {
     // ignore storage failures
   }
 
-  // 通过 query 把名字带�?Compare
+  // 通过 query 把名字带�?Compare
 }
 
 const beeswarmTraits = computed<TraitKey[]>(() => {
@@ -289,6 +298,22 @@ watch(
     if (!next || next === prev) return;
     selectedCountryCode.value = null;
   },
+);
+
+watch(
+  () => [route.query.beeswarmBreedGroup, route.query.homeSelectedDog, route.hash, dogs.value.length] as const,
+  async ([groupQuery, homeSelectedDogQuery, hash]) => {
+    selectedBeeswarmBreedGroup.value = readSingleQueryValue(groupQuery);
+    const targetDogName = readSingleQueryValue(homeSelectedDogQuery);
+    if (targetDogName && dogs.value.some((d) => d.name === targetDogName)) {
+      selectedName.value = targetDogName;
+    }
+    if (!selectedBeeswarmBreedGroup.value && hash !== "#beeswarm-section") return;
+
+    await nextTick();
+    beeswarmSectionRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+  },
+  { immediate: true },
 );
 
 onMounted(() => {
@@ -308,7 +333,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="home">
-    <!-- 上面三块卡片�?-->
+    <!-- 上面三块卡片�?-->
     <section class="top">
       <div class="card left">
         <div class="title">Select a dog</div>
@@ -369,7 +394,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="card right">
-        <div class="title">Temperament profile (8 traits)</div>
+        <div class="title">Temperament traits</div>
         <div class="traitArea">
           <TraitLineChart :dog="selectedDog" :avgTraits="avgTraits" />
         </div>
@@ -379,7 +404,7 @@ onBeforeUnmount(() => {
     <!-- 下方：大 scatter + 右侧列表 -->
     <section class="bottom">
       <div class="card scatter">
-        <div class="title">All dogs overview (scatterplot)</div>
+        <div class="title">Dogs overview</div>
 
         <div class="plotArea">
           <ScatterPlot
@@ -425,11 +450,11 @@ onBeforeUnmount(() => {
       </div>
     </section>
     <div class="card mapCard">
-      <div class="title">Breed origins (world)</div>
+      <div class="title">Breed origins</div>
       <div class="worldLayout">
         <div class="countryDogs">
           <div class="listHeader">
-            <div class="title">Dogs shown</div>
+            <div class="title">Dogs list</div>
             <div class="subtitle">
               {{ countryListCountryCode ?? "Select a dog or click a country" }}
             </div>
@@ -477,7 +502,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="hint">Showing {{ worldDisplayPoints.length }} breeds with country info.</div>
     </div>
-    <section class="beeswarmSection">
+    <section id="beeswarm-section" ref="beeswarmSectionRef" class="beeswarmSection">
       <div class="card beeswarm">
 
         <div class="plotArea beeswarmArea">
@@ -486,6 +511,7 @@ onBeforeUnmount(() => {
             :traits="beeswarmTraits"
             :traitLabels="traitLabels"
             :highlightId="highlightId"
+            :selectedBreedGroup="selectedBeeswarmBreedGroup"
             @selectDog="onSelectDog"
           />
         </div>
@@ -539,11 +565,11 @@ onBeforeUnmount(() => {
 
 .midBody {
   flex: 1 1 auto;
-  min-height: 0; /* 重要：防�?flex 子项计算高度出问�?*/
+  min-height: 0; /* 重要：防�?flex 子项计算高度出问�?*/
   position: relative;
 }
 
-/* [ADDED] 让组件自身高�?100%，它�?bottom:0 才会贴到 midBody 底部 */
+/* [ADDED] 让组件自身高�?100%，它�?bottom:0 才会贴到 midBody 底部 */
 .midChart {
   height: 100%;
 }
@@ -774,7 +800,7 @@ onBeforeUnmount(() => {
   background: #ffdf5d;
 }
 
-/* 可选：让选中的更“像选中”一�?*/
+/* 可选：让选中的更“像选中”一�?*/
 .row.active .name {
   font-weight: 700;
 }
@@ -794,7 +820,7 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 12px; /* 为右侧箭头留出空�?*/
+  padding-right: 12px; /* 为右侧箭头留出空�?*/
 }
 
 .empty {
@@ -902,9 +928,6 @@ onBeforeUnmount(() => {
   min-height: 780px;
 }
 </style>
-
-
-
 
 
 

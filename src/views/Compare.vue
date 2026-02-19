@@ -127,7 +127,7 @@ watchEffect(() => {
     <section class="grid">
       <div class="col leftCol">
         <div class="panel big">
-          <h3>Radar 对比</h3>
+          <h3>Temperament Traits Compare</h3>
           <div class="radarChartWrap">
             <RadarChart
               :dogs="selectedDogs"
@@ -160,7 +160,7 @@ watchEffect(() => {
         </div>
 
         <div class="panel boxPanel">
-          <h4>Compare</h4>
+          <h4>Population Distribution & Benchmark</h4>
           <BoxPlotChart
             :allDogs="dogs"
             :selectedDogs="selectedDogs"
