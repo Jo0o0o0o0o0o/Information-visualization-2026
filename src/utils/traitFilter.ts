@@ -34,7 +34,7 @@ export const traitLabels: Record<TraitKey, string> = {
 };
 
 export function createDefaultTraitEnabled(): Record<TraitKey, boolean> {
-  return Object.fromEntries(TRAIT_KEYS.map((k) => [k, true])) as Record<TraitKey, boolean>;
+  return Object.fromEntries(TRAIT_KEYS.map((k) => [k, false])) as Record<TraitKey, boolean>;
 }
 
 /**

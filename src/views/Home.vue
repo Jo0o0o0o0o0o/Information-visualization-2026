@@ -43,6 +43,10 @@ const scatterData = computed<ScatterDatum[]>(() =>
   filteredDogs.value.map((d) => ({
     id: d.name,
     label: d.name,
+    breedGroup: findBreedGroupByName(
+      d.name,
+      theDogApiBreeds as { name: string; breed_group?: string | null }[],
+    ),
     x: (d.max_height_male + d.max_height_female) / 2,
     y: (d.max_weight_male + d.max_weight_female) / 2,
     size: d.max_life_expectancy,
@@ -63,15 +67,39 @@ const selectedBreedGroupStyle = computed(() =>
 );
 
 const filterEnabled = ref(false);
+const breedGroupFilterEnabled = ref(false);
 const traitEnabled = reactive<Record<TraitKey, boolean>>(createDefaultTraitEnabled());
 
 function toggleTrait(k: TraitKey, v: boolean) {
   traitEnabled[k] = v;
 }
 
-const filteredDogs = computed(() =>
-  filterDogsBySelectedTraits(dogs.value, selectedDog.value, filterEnabled.value, traitEnabled),
-);
+const filteredDogs = computed(() => {
+  const traitFiltered = filterDogsBySelectedTraits(
+    dogs.value,
+    selectedDog.value,
+    filterEnabled.value,
+    traitEnabled,
+  );
+
+  if (!filterEnabled.value || !breedGroupFilterEnabled.value || !selectedDog.value) {
+    return traitFiltered;
+  }
+
+  const selectedGroup = findBreedGroupByName(
+    selectedDog.value.name,
+    theDogApiBreeds as { name: string; breed_group?: string | null }[],
+  );
+
+  return traitFiltered.filter((d) => {
+    const group = findBreedGroupByName(
+      d.name,
+      theDogApiBreeds as { name: string; breed_group?: string | null }[],
+    );
+    if (!selectedGroup) return !group;
+    return group === selectedGroup;
+  });
+});
 
 const filteredCount = computed(() => filteredDogs.value.length);
 const totalCount = computed(() => dogs.value.length);
@@ -258,11 +286,13 @@ onBeforeUnmount(() => {
             :data="scatterData"
             :highlightId="highlightId"
             :filterEnabled="filterEnabled"
+            :breedGroupFilterEnabled="breedGroupFilterEnabled"
             :traitEnabled="traitEnabled"
             :hasSelectedDog="!!selectedDog"
             :filteredCount="filteredCount"
             :totalCount="totalCount"
             @update:filterEnabled="filterEnabled = $event"
+            @update:breedGroupFilterEnabled="breedGroupFilterEnabled = $event"
             @toggleTrait="toggleTrait"
             @selectDog="onSelectDog"
           />

@@ -10,6 +10,7 @@ const props = defineProps<{
   highlightId?: string | null;
   // controls state from parent
   filterEnabled: boolean;
+  breedGroupFilterEnabled: boolean;
   traitEnabled: Record<TraitKey, boolean>;
   hasSelectedDog: boolean;
 
@@ -20,6 +21,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "update:filterEnabled", v: boolean): void;
+  (e: "update:breedGroupFilterEnabled", v: boolean): void;
   (e: "toggleTrait", k: TraitKey, v: boolean): void;
   (e: "selectDog", id: string | number): void;
 }>();
@@ -99,7 +101,12 @@ watch(
 );
 
 watch(
-  () => [props.filterEnabled, props.traitEnabled, props.hasSelectedDog],
+  () => [
+    props.filterEnabled,
+    props.breedGroupFilterEnabled,
+    props.traitEnabled,
+    props.hasSelectedDog,
+  ],
   async () => {
     await nextTick();
     requestAnimationFrame(resizeAndDraw);
@@ -124,6 +131,11 @@ function onToggleFilter(e: Event) {
 function onToggleTrait(k: TraitKey, e: Event) {
   const v = (e.target as HTMLInputElement).checked;
   emit("toggleTrait", k, v);
+}
+
+function onToggleBreedGroup(e: Event) {
+  const v = (e.target as HTMLInputElement).checked;
+  emit("update:breedGroupFilterEnabled", v);
 }
 </script>
 
@@ -155,6 +167,16 @@ function onToggleTrait(k: TraitKey, e: Event) {
       </div>
 
       <div class="chips" :class="{ disabled: !filterEnabled || !hasSelectedDog }">
+        <label class="chip">
+          <input
+            type="checkbox"
+            :checked="breedGroupFilterEnabled"
+            @change="onToggleBreedGroup"
+            :disabled="!filterEnabled || !hasSelectedDog"
+          />
+          <span class="chipLabel">breedgroup</span>
+        </label>
+
         <label v-for="k in TRAIT_KEYS" :key="k" class="chip">
           <input
             type="checkbox"
@@ -178,6 +200,7 @@ function onToggleTrait(k: TraitKey, e: Event) {
         :style="{ left: tip.x + 'px', top: tip.y + 'px' }"
       >
         <div class="tTitle">{{ hovered.label ?? hovered.id }}</div>
+        <div class="tRow">Breed-Group: {{ hovered.breedGroup ?? "-" }}</div>
         <div class="tRow">Max-Life: {{ hovered.size ?? "-" }}</div>
         <div class="tRow">Max-Height: {{ hovered.x }}</div>
         <div class="tRow">Max-Weight: {{ hovered.y }}</div>
@@ -295,7 +318,7 @@ function onToggleTrait(k: TraitKey, e: Event) {
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .chips.disabled {
@@ -306,11 +329,11 @@ function onToggleTrait(k: TraitKey, e: Event) {
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
+  gap: 5px;
+  padding: 5px 9px;
   border-radius: 999px;
   border: 1px solid #e5e7eb;
-  font-size: 12px;
+  font-size: 11px;
   background-color: #ffffff94;
   cursor: pointer;
   transition:
