@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, reactive, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import ScatterPlot from "@/components/ScatterPlot.vue";
 import dogsJson from "@/data/dogs_ninjas_raw.json";
 import type { DogBreed } from "@/types/dogBreed";
@@ -30,6 +30,7 @@ import {
 
 const dogs = ref<DogBreed[]>([]);
 const route = useRoute();
+const router = useRouter();
 const selectedName = ref<string>("");
 const dogSearchQuery = ref("");
 const dogSelectOpen = ref(false);
@@ -240,6 +241,18 @@ function readSingleQueryValue(value: unknown): string | null {
   return typeof raw === "string" && raw.trim().length > 0 ? raw : null;
 }
 
+async function focusBeeswarmByBreedGroup(group: string | null) {
+  if (!group) return;
+  selectedBeeswarmBreedGroup.value = group;
+  await nextTick();
+  beeswarmSectionRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+  router.push({
+    path: "/home",
+    query: { ...route.query, beeswarmBreedGroup: group, homeSelectedDog: undefined },
+    hash: "#beeswarm-section",
+  });
+}
+
 const listDogs = computed(() => {
   const list = filteredDogs.value.slice(); // 当前筛选结�?= scatterplot 的数据源
   const sel = selectedDog.value;
@@ -377,9 +390,15 @@ onBeforeUnmount(() => {
           <div v-else class="placeholder">狗的 image</div>
         </div>
 
-        <div v-if="selectedBreedGroup" class="breedGroupTag" :style="selectedBreedGroupStyle">
+        <button
+          v-if="selectedBreedGroup"
+          class="breedGroupTag"
+          :style="selectedBreedGroupStyle"
+          type="button"
+          @click="focusBeeswarmByBreedGroup(selectedBreedGroup)"
+        >
           {{ selectedBreedGroup }}
-        </div>
+        </button>
 
          <button class="compareBtn" :disabled="!selectedDog" @click="sendToCompare">
           Compare
@@ -697,12 +716,15 @@ onBeforeUnmount(() => {
 
 .breedGroupTag {
   margin-top: 10px;
+  border: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   border-radius: 999px;
   padding: 5px 10px;
   font-size: 12px;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .traitArea {
@@ -928,8 +950,6 @@ onBeforeUnmount(() => {
   min-height: 780px;
 }
 </style>
-
-
 
 
 

@@ -43,6 +43,7 @@ onUnmounted(() => {
           Comparison
           <span v-if="compareCount > 0" class="badge">{{ compareCount }}</span>
         </RouterLink>
+        <RouterLink class="link" to="/about">About</RouterLink>
       </nav>
     </header>
 
