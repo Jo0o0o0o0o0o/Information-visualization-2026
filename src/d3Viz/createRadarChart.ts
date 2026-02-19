@@ -82,7 +82,7 @@ export const RADAR_COLORS: string[] = [
   "#C75B39",
   "#7B68A6",
   "#4A9B8E",
-  "#E8926F",
+  "#6dc44d",
   "#8B7355",
   "#A0526E",
   "#5B8FA3",
