@@ -5,7 +5,7 @@ import type { DogBreed } from "@/types/dogBreed";
 import CompareSlotsBar from "@/components/CompareSlotsBar.vue";
 import RadarChart from "@/components/RadarChart.vue";
 import dogsJson from "@/data/dogs_ninjas_raw.json";
-import { RADAR_AXES } from "@/d3Viz/createRadarChart"; 
+import { RADAR_AXES, RADAR_COLORS } from "@/d3Viz/createRadarChart"; 
 import AxisSelector from "@/components/AxisSelector.vue";
 import DumbbellChart from "@/components/DumbbellChart.vue";
 import BoxPlotChart from "@/components/BoxPlotChart.vue";
@@ -28,37 +28,86 @@ function addDogToSlots(dog: DogBreed) {
 
   const emptyIdx = slots.value.findIndex((d) => d === null);
   if (emptyIdx === -1) {
-    // if full, replace the last slot
-    slots.value[MAX - 1] = dog;
+    return;
   } else {
     slots.value[emptyIdx] = dog;
+  }
+}
+
+function addDogByName(name: string) {
+  const dog = dogs.value.find((d) => d.name === name);
+  if (dog) addDogToSlots(dog);
+}
+
+function consumeCompareAddFromStorage() {
+  const queueRaw = localStorage.getItem("compare_add_queue");
+  if (queueRaw) {
+    try {
+      const parsed = JSON.parse(queueRaw) as unknown;
+      const names = Array.isArray(parsed)
+        ? parsed.filter((v): v is string => typeof v === "string")
+        : [];
+
+      names.forEach((name) => addDogByName(name));
+    } catch (_) {
+      // ignore storage failures
+    }
+  }
+
+  try {
+    const name = localStorage.getItem("compare_add");
+    if (!name) return;
+    addDogByName(name);
+    localStorage.removeItem("compare_add");
+  } catch (_) {
+    // ignore storage failures
   }
 }
 
 
 onMounted(() => {
   dogs.value = dogsJson as DogBreed[];
+  consumeCompareAddFromStorage();
 });
 
 const MAX = 5;
 const slots = ref<(DogBreed | null)[]>(Array.from({ length: MAX }, () => null));
 
+function syncCompareQueueToStorage() {
+  try {
+    const names = slots.value
+      .map((d) => d?.name)
+      .filter((name): name is string => typeof name === "string" && name.length > 0);
+
+    localStorage.setItem("compare_add_queue", JSON.stringify(names));
+    localStorage.removeItem("compare_add");
+    window.dispatchEvent(new Event("compare-queue-updated"));
+  } catch (_) {
+    // ignore storage failures
+  }
+}
+
 function setSlot(i: number, dog: DogBreed | null) {
   slots.value[i] = dog;
+  syncCompareQueueToStorage();
 }
 
 const selectedDogs = computed(() => slots.value.filter(Boolean) as DogBreed[]);
 
-const DOG_COLORS = ["#2E6FBA", "#F28E2B", "#E15759", "#76B7B2", "#59A14F"];
-const selectedColors = computed(() => DOG_COLORS.slice(0, selectedDogs.value.length));
+const selectedColors = computed(() => RADAR_COLORS.slice(0, selectedDogs.value.length));
 
 watchEffect(() => {
   const q = route.query?.add;
-  const name = Array.isArray(q) ? q[0] : (q as string | undefined);
-  if (!name || dogs.value.length === 0) return;
+  if (dogs.value.length === 0) return;
 
-  const dog = dogs.value.find((d) => d.name === name);
-  if (dog) addDogToSlots(dog);
+  const fromAdd = (Array.isArray(q) ? q : q ? [q] : []).filter(
+    (v): v is string => typeof v === "string" && v.length > 0,
+  );
+  const fromIndexed = Array.from({ length: MAX }, (_, i) => route.query?.[`add${i + 1}`])
+    .map((v) => (Array.isArray(v) ? v[0] : v))
+    .filter((v): v is string => typeof v === "string" && v.length > 0);
+
+  [...fromAdd, ...fromIndexed].forEach((name) => addDogByName(name));
 });
 </script>
 

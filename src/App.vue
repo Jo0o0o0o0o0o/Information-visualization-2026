@@ -1,8 +1,32 @@
 <script setup lang="ts">
-import { createApp } from "vue";
-import App from "./App.vue";
-import { router } from "./router";
+import { onMounted, onUnmounted, ref } from "vue";
 import { RouterLink, RouterView } from "vue-router";
+
+const compareCount = ref(0);
+
+function updateCompareCount() {
+  try {
+    const raw = localStorage.getItem("compare_add_queue");
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    const names = Array.isArray(parsed)
+      ? parsed.filter((v): v is string => typeof v === "string")
+      : [];
+    compareCount.value = names.length;
+  } catch (_) {
+    compareCount.value = 0;
+  }
+}
+
+onMounted(() => {
+  updateCompareCount();
+  window.addEventListener("storage", updateCompareCount);
+  window.addEventListener("compare-queue-updated", updateCompareCount);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("storage", updateCompareCount);
+  window.removeEventListener("compare-queue-updated", updateCompareCount);
+});
 </script>
 
 <template>
@@ -15,7 +39,10 @@ import { RouterLink, RouterView } from "vue-router";
 
       <nav class="nav">
         <RouterLink class="link" to="/home">Overview</RouterLink>
-        <RouterLink class="link" to="/compare">Comparison</RouterLink>
+        <RouterLink class="link compareLink" to="/compare">
+          Comparison
+          <span v-if="compareCount > 0" class="badge">{{ compareCount }}</span>
+        </RouterLink>
       </nav>
     </header>
 
@@ -79,6 +106,25 @@ import { RouterLink, RouterView } from "vue-router";
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #333;
+}
+
+.compareLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
 }
 
 .link::after {
