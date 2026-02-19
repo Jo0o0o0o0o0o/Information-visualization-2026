@@ -34,7 +34,7 @@ onUnmounted(() => {
     <header class="topbar">
       <div class="logo">
         <span class="logo-mark">TheDogs</span>
-        <span class="logo-text">Information Visualization Lab</span>
+        <span class="logo-text">Dogviz Dashboard</span>
       </div>
 
       <nav class="nav">
