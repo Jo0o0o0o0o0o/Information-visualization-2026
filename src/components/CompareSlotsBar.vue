@@ -105,6 +105,7 @@ function filteredList(currentIndex: number) {
         class="visual addArea"
         @click="openFromPlus(i - 1)"
       >
+        <span class="plus">+</span>
         <span class="label">Add</span>
       </button>
 
@@ -196,11 +197,13 @@ function filteredList(currentIndex: number) {
 
 .visual {
   width: 100%;
+  aspect-ratio: 1 / 1;   /* 锟?寮哄埗姝ｆ柟锟?*/
   border-radius: 16px;
   background: #e9e9e9;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;      /* 锟?鍥剧墖瓒呭嚭瑁佸壀 */
   position: relative;
 }
 
@@ -216,6 +219,7 @@ function filteredList(currentIndex: number) {
 }
 
 .label {
+  display: none;   /* 涓嶅啀鏄剧ず Add 鏂囧瓧 */
 }
 
 .picked {
@@ -225,6 +229,7 @@ function filteredList(currentIndex: number) {
 .picked-img {
   width: 100%;
   height: 100%;
+  object-fit: cover;   /* 鑷€傚簲瑁佸壀 */
   display: block;
 }
 /* Dropdown */
@@ -275,6 +280,7 @@ function filteredList(currentIndex: number) {
   position: absolute;
   left: 14px;
   right: 14px;
+  top: calc(14px + 90px + 12px + 38px + 6px); /* 鍗＄墖鍐呴儴瀹氫綅 */
   background: white;
   border: 1px solid rgba(0,0,0,0.14);
   border-radius: 12px;
