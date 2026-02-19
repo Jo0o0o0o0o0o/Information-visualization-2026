@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import dogHeightImg from "@/Image/dogHeight.png";
 import manHeightImg from "@/Image/ManHeight.png";
 import womanHeightImg from "@/Image/WomanHeight.png";
@@ -7,7 +7,9 @@ import womanHeightImg from "@/Image/WomanHeight.png";
 // 缁勪欢鍙渶瑕佽繖浜涘瓧娈碉紱涓嶅己渚濊禆浣犻」鐩噷鐨勭被鍨嬫枃浠?
 type DogLike = {
   name: string;
+  min_height_male?: number;
   max_height_male: number;
+  min_height_female?: number;
   max_height_female: number;
 };
 
@@ -61,11 +63,29 @@ const dogMaxIn = computed<number>(() => {
   );
 });
 const dogMaxCm = computed<number>(() => dogMaxIn.value * IN_TO_CM);
+const dogMinIn = computed<number>(() => {
+  if (!props.dog) return 0;
+  const mins = [
+    parseNumber(props.dog.min_height_male),
+    parseNumber(props.dog.min_height_female),
+  ].filter((v) => v > 0);
+  if (mins.length === 0) return 0;
+  return Math.min(...mins);
+});
+const dogMinCm = computed<number>(() => dogMinIn.value * IN_TO_CM);
+const dogAvgIn = computed<number>(() => {
+  if (dogMinIn.value <= 0) return dogMaxIn.value;
+  return (dogMinIn.value + dogMaxIn.value) / 2;
+});
+const dogAvgCm = computed<number>(() => dogAvgIn.value * IN_TO_CM);
 
 
 const dogMaxCmLabel = computed(() => Math.round(dogMaxCm.value));   
+const dogMinCmLabel = computed(() => Math.round(dogMinCm.value));   
+const dogAvgCmLabel = computed(() => Math.round(dogAvgCm.value));   
 const manLabel = computed(() => Math.round(props.manHeightCm));     
 const womanLabel = computed(() => Math.round(props.womanHeightCm)); 
+const showDogTooltip = ref(false);
 
   
 const ticksCm = computed(() => {
@@ -96,13 +116,22 @@ const ticksCm = computed(() => {
         <div class="col dog">
             <div class="meta">
             <div class="label">{{ dog.name }}</div>
-          <div class="value">max {{ dogMaxCmLabel }} cm</div>
-          <div class="imgWrap">
+          <div class="value">average {{ dogAvgCmLabel }} cm</div>
+          <div
+            class="imgWrap dogImgWrap"
+            @mouseenter="showDogTooltip = true"
+            @mouseleave="showDogTooltip = false"
+          >
+            <div v-if="showDogTooltip" class="dogTooltip" role="tooltip">
+              <div>average height: {{ dogAvgCmLabel }} cm</div>
+              <div>max height: {{ dogMaxCmLabel }} cm</div>
+              <div>min height: {{ dogMinCmLabel > 0 ? dogMinCmLabel + ' cm' : 'N/A' }}</div>
+            </div>
             <img
               :src="dogHeightImg"
               alt="dog height"
               class="figureImg"
-              :style="{ height: safePxFromCm(dogMaxCm * 1.5) + 'px', maxWidth: 'none' }"
+              :style="{ height: safePxFromCm(dogAvgCm * 1.5) + 'px', maxWidth: 'none' }"
             />
         </div>
           </div>
@@ -230,6 +259,10 @@ const ticksCm = computed(() => {
   position: static;
 }
 
+.dogImgWrap {
+  position: relative;
+}
+
 .imgWrap {
   position: absolute;
   left: 0;
@@ -250,6 +283,24 @@ const ticksCm = computed(() => {
 
 .col.human .figureImg {
   transform: translateY(-12px);
+}
+
+.dogTooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  background: #fff;
+  color: #111;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+  pointer-events: none;
 }
 
 .label {

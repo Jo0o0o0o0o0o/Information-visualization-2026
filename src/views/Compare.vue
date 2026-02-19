@@ -139,7 +139,7 @@ watchEffect(() => {
         </div>
 
         <div class="panel">
-          <h3>体型对比</h3>
+          <h3>Difference Comparison</h3>
           <DumbbellChart
             :dogs="selectedDogs"
             :colors="selectedColors"
@@ -160,7 +160,7 @@ watchEffect(() => {
         </div>
 
         <div class="panel boxPanel">
-          <h3>BoxPlotChart</h3>
+          <h4>Compare</h4>
           <BoxPlotChart
             :allDogs="dogs"
             :selectedDogs="selectedDogs"
