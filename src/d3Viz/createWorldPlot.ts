@@ -27,6 +27,7 @@ export type CreateWorldPlotOptions = {
   height: number;
   worldGeoJsonUrl?: string;
   pointColor?: string;
+  activeCountryCode?: string | null;
   onHover?: (d: WorldPoint, ev: MouseEvent) => void;
   onMove?: (d: WorldPoint, ev: MouseEvent) => void;
   onLeave?: () => void;
@@ -38,6 +39,7 @@ export type WorldPlotApi = {
   update: (points: WorldPoint[]) => void;
   setHighlight: (id: string | null) => void;
   setPointColor: (color: string) => void;
+  setActiveCountry: (countryCode: string | null) => void;
   resize: (w: number, h: number) => void;
   destroy: () => void;
 };
@@ -69,6 +71,7 @@ export function createWorldPlot(
   let aggregatedPoints: AggregatedWorldPoint[] = [];
   let highlightId: string | null = opt.highlightId ?? null;
   let pointColor = opt.pointColor ?? "#f97316";
+  let activeCountryCode: string | null = opt.activeCountryCode?.toUpperCase() ?? null;
 
   const zoom = d3
     .zoom<SVGSVGElement, unknown>()
@@ -87,11 +90,30 @@ export function createWorldPlot(
     sel: d3.Selection<SVGCircleElement, AggregatedWorldPoint, SVGGElement, unknown>,
   ) {
     sel
-      .attr("r", (d) =>
-        highlightId && d.dogIds.includes(highlightId) ? getBaseRadius(d) + 1.8 : getBaseRadius(d),
-      )
-      .attr("fill", (d) => (highlightId && d.dogIds.includes(highlightId) ? "#facc15" : pointColor))
-      .attr("opacity", (d) => (highlightId && d.dogIds.includes(highlightId) ? 1 : 0.55));
+      .attr("r", (d) => {
+        const isCountryActive =
+          !!activeCountryCode && (d.countryCode ?? "").toUpperCase() === activeCountryCode;
+        const isDogActive = !!highlightId && d.dogIds.includes(highlightId);
+        if (isDogActive) return getBaseRadius(d) + 1.8;
+        if (isCountryActive) return getBaseRadius(d) + 1.8;
+        return getBaseRadius(d);
+      })
+      .attr("fill", (d) => {
+        const isCountryActive =
+          !!activeCountryCode && (d.countryCode ?? "").toUpperCase() === activeCountryCode;
+        const isDogActive = !!highlightId && d.dogIds.includes(highlightId);
+        if (isDogActive) return "#facc15";
+        if (isCountryActive) return pointColor;
+        return pointColor;
+      })
+      .attr("opacity", (d) => {
+        const isCountryActive =
+          !!activeCountryCode && (d.countryCode ?? "").toUpperCase() === activeCountryCode;
+        const isDogActive = !!highlightId && d.dogIds.includes(highlightId);
+        if (isDogActive) return 1;
+        if (isCountryActive) return 1;
+        return 0.55;
+      });
   }
 
   function aggregateByCountry(rawPoints: WorldPoint[]): AggregatedWorldPoint[] {
@@ -204,6 +226,12 @@ export function createWorldPlot(
     applyHighlight(sel);
   }
 
+  function setActiveCountry(countryCode: string | null) {
+    activeCountryCode = countryCode?.toUpperCase() ?? null;
+    const sel = gPts.selectAll<SVGCircleElement, AggregatedWorldPoint>("circle");
+    applyHighlight(sel);
+  }
+
   function resize(w: number, h: number) {
     width = Math.max(10, w);
     height = Math.max(10, h);
@@ -216,5 +244,5 @@ export function createWorldPlot(
     svg.remove();
   }
 
-  return { update, setHighlight, setPointColor, resize, destroy };
+  return { update, setHighlight, setPointColor, setActiveCountry, resize, destroy };
 }

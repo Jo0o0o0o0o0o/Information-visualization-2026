@@ -6,6 +6,7 @@ const props = defineProps<{
   points: WorldPoint[];
   highlightId?: string | null;
   pointColor?: string;
+  activeCountryCode?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -46,6 +47,7 @@ onMounted(() => {
 
     highlightId: props.highlightId ?? null,
     pointColor: props.pointColor ?? "#f97316",
+    activeCountryCode: props.activeCountryCode ?? null,
 
     onHover: (d, ev) => {
       tip.value.show = true;
@@ -93,6 +95,11 @@ watch(
 watch(
   () => props.pointColor,
   (color) => plot?.setPointColor(color ?? "#f97316"),
+);
+
+watch(
+  () => props.activeCountryCode,
+  (cc) => plot?.setActiveCountry(cc ?? null),
 );
 </script>
 

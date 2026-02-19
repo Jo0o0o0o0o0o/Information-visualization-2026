@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, reactive } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, reactive, watch } from "vue";
 import ScatterPlot from "@/components/ScatterPlot.vue";
 import dogsJson from "@/data/dogs_ninjas_raw.json";
 import type { DogBreed } from "@/types/dogBreed";
@@ -167,21 +167,38 @@ const worldPointColor = computed(() => {
 });
 
 const selectedCountryCode = ref<string | null>(null);
+const selectedDogCountryCode = computed(() => {
+  const sel = selectedDog.value;
+  if (!sel) return null;
+
+  const point = worldPoints.value.find((p) => (p.dogName ?? p.label ?? p.id) === sel.name);
+  return point?.countryCode?.toUpperCase() ?? null;
+});
+const countryListCountryCode = computed(() => selectedCountryCode.value ?? selectedDogCountryCode.value);
 const countryDogList = computed(() => {
-  const cc = selectedCountryCode.value;
+  const cc = countryListCountryCode.value;
   if (!cc) return [] as DogBreed[];
 
   const names = Array.from(
     new Set(
-      worldDisplayPoints.value
+      worldPoints.value
         .filter((p) => (p.countryCode ?? "").toUpperCase() === cc)
         .map((p) => p.dogName ?? p.label ?? p.id),
     ),
   );
 
-  return names
+  const inCountry = names
     .map((name) => dogs.value.find((d) => d.name === name))
     .filter((d): d is DogBreed => Boolean(d));
+
+  const sel = selectedDog.value;
+  if (!sel) return inCountry;
+
+  if (!inCountry.some((d) => d.name === sel.name)) {
+    return inCountry;
+  }
+
+  return [sel, ...inCountry.filter((d) => d.name !== sel.name)];
 });
 
 function focusDogSearch() {
@@ -265,6 +282,14 @@ const beeswarmTraits = computed<TraitKey[]>(() => {
   const enabled = TRAIT_KEYS.filter((k) => traitEnabled[k]);
   return enabled.length ? enabled : [...TRAIT_KEYS];
 });
+
+watch(
+  () => selectedName.value,
+  (next, prev) => {
+    if (!next || next === prev) return;
+    selectedCountryCode.value = null;
+  },
+);
 
 onMounted(() => {
   dogs.value = dogsJson as DogBreed[];
@@ -406,7 +431,7 @@ onBeforeUnmount(() => {
           <div class="listHeader">
             <div class="title">Dogs shown</div>
             <div class="subtitle">
-              {{ selectedCountryCode ?? "Click a country" }}
+              {{ countryListCountryCode ?? "Select a dog or click a country" }}
             </div>
           </div>
 
@@ -435,7 +460,7 @@ onBeforeUnmount(() => {
               <div class="name">{{ d.name }}</div>
             </button>
             <div v-if="countryDogList.length === 0" class="empty">
-              Click a country dot on the map to show dogs from that country.
+              Select a dog or click a country to show dogs from that country.
             </div>
           </div>
         </div>
@@ -445,7 +470,7 @@ onBeforeUnmount(() => {
             :points="worldDisplayPoints"
             :highlightId="highlightId"
             :pointColor="worldPointColor"
-            @selectDog="onSelectDog"
+            :activeCountryCode="selectedCountryCode"
             @selectCountry="onSelectCountry"
           />
         </div>
