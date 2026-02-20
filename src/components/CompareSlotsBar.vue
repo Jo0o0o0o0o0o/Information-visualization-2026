@@ -125,7 +125,7 @@ function filteredList(currentIndex: number) {
   // 已选中的狗不再出现在列表
   const available = props.dogs.filter(d => !selectedNames.has(d.name));
 
-  return fuzzyFilter(available, query.value, (d) => d.name, { limit: 80 });
+  return fuzzyFilter(available, query.value, (d) => d.name, { limit: available.length });
 }
 </script>
 
@@ -397,4 +397,3 @@ function filteredList(currentIndex: number) {
 .row:hover { background: #f0f0f0; }
 .empty { padding: 12px; opacity: 0.7; }
 </style>
-

@@ -108,7 +108,9 @@ const filteredDogs = computed(() => {
 const filteredCount = computed(() => filteredDogs.value.length);
 const totalCount = computed(() => dogs.value.length);
 const dogSelectOptions = computed(() => {
-  const matched = fuzzyFilter(dogs.value, dogSearchQuery.value, (d) => d.name, { limit: 80 });
+  const matched = fuzzyFilter(dogs.value, dogSearchQuery.value, (d) => d.name, {
+    limit: dogs.value.length,
+  });
   const sel = selectedDog.value;
   if (!sel || matched.some((d) => d.name === sel.name)) return matched;
   return [sel, ...matched];
@@ -979,5 +981,4 @@ onBeforeUnmount(() => {
   min-height: 780px;
 }
 </style>
-
 
