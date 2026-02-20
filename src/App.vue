@@ -33,6 +33,7 @@ onUnmounted(() => {
   <div class="app">
     <header class="topbar">
       <div class="logo">
+        <img class="logo-icon" src="/dogtitle.png" alt="TheDogs icon" />
         <span class="logo-mark">TheDogs</span>
         <span class="logo-text">Dogviz Dashboard</span>
       </div>
@@ -81,8 +82,15 @@ onUnmounted(() => {
 
 .logo {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
+}
+
+.logo-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .logo-mark {
